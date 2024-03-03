@@ -1,15 +1,14 @@
 {
-  "name": "vilasa-backend",
+  "name": "vilasa-jewelry",
   "version": "1.0.0",
-  "description": "backend for vilasa jewelry site",
-  "main": "index.js",
+  "description": "Full Stack Vilasa Jewelry Ecommerce",
+  "main": "backend/server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "javascript",
-    "backend",
-    "vilasa"
+    "vilasa-jwelery"
   ],
   "author": "Kuntal Roy",
   "license": "ISC"
