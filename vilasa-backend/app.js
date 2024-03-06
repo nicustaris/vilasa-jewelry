@@ -20,6 +20,7 @@ const chat = require("./routes/chatRoute");
 const dyimg = require("./routes/dynamicImageRoutes");
 const dyurl = require("./routes/urlRoutes");
 const invoice = require("./routes/invoiceRoute");
+const ErrorHandler = require('./utils/errorHandler');
 
 // Middleware setup
 app.use(cookieParser()); // Middleware for parsing cookies
@@ -62,6 +63,25 @@ const __dirname1 = path.resolve();
 // app.get("*", (req, res) =>
 //   res.sendFile(path.resolve(__dirname1, "frontend", "build", "index.html"))
 // );
+// Error handling middleware
+app.use((err, req, res, next) => {
+  // Check if the error is an instance of our custom ErrorHandler
+  if (err instanceof ErrorHandler) {
+      // Send JSON response with error details
+      res.status(err.statusCode).json(err.toJSON());
+  } else {
+      // If it's not our custom error, handle it differently
+      // For example, log the error and send a generic error response
+      console.error(err);
+      res.status(500).json({
+          success: false,
+          error: {
+              message: 'Internal Server Error',
+              statusCode: 500
+          }
+      });
+  }
+});
 
 // Simple middleware for logging each request to the console
 app.use((req, res, next) => {
