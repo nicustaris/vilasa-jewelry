@@ -20,6 +20,7 @@
 .env.production.local
 
 # configuration files
+vilasa-backend/config/config.env
 config.env
 
 # logs
