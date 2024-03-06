@@ -5,7 +5,7 @@ require("dotenv").config({ path: "vilasa-backend/config/config.env" });
  * Connect to MongoDB database
  * @returns {Promise<void>} A promise that resolves once the database connection is established
  */
-async function connectDB() {
+async function connectdatabase() {
     try {
         // Allow using dot notation in query strings
         mongoose.set("strictQuery", false); 

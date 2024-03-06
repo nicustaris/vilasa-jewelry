@@ -1,7 +1,8 @@
-const app = require("./app");
+const app = require('./app');
 const dotenv = require("dotenv");
-const connectDB = require("./database/connectDB");
+const connectdatabase = require("./database/connectdatabase");
 const cloudinary = require("cloudinary");
+
 
 // Load environment variables
 dotenv.config({ path: "vilasa-backend/config/config.env" });
@@ -22,10 +23,13 @@ const server = app.listen(PORT, () => {
     console.log(`Server is listening on PORT ${PORT}`);
 });
 
+
+
 // Handle uncaught exceptions
 process.on("uncaughtException", (err) => {
     console.error(`Uncaught Exception: ${err.message}`);
     console.error("Shutting down the server due to Uncaught Exception");
+    // Graceful shutdown
     process.exit(1);
 });
 
@@ -36,4 +40,18 @@ process.on("unhandledRejection", (err) => {
     server.close(() => {
         process.exit(1);
     });
+});
+
+// Graceful shutdown on SIGINT signal (Ctrl+C)
+process.on('SIGINT', () => {
+    console.log('SIGINT received. Shutting down gracefully...');
+    server.close(() => {
+        console.log('Server stopped.');
+        process.exit(0);
+    });
+});
+
+// Log when the server is closed unexpectedly
+server.on('close', () => {
+    console.log('Server closed unexpectedly.');
 });

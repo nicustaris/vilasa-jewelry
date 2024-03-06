@@ -6,14 +6,18 @@ const {
     paytmResponse,
     getPaymentStatus
 } = require('../controllers/paymentController');
+const { isAuthenticatedUser, authorizeRoles } = require("../middleware/auth");
 
-// Middleware to protect routes
-const { asyncWrapper } = require('../middlewares/asyncWrapper');
+// Routes for payment processing
+router.route('/stripe')
+    .post(isAuthenticatedUser, authorizeRoles('user'), processStripePayment); // Process payment using Stripe
 
-// Routes
-router.post('/stripe', asyncWrapper(processStripePayment)); // Process payment using Stripe
-router.post('/paytm', asyncWrapper(processPaytmPayment)); // Process payment using Paytm
+router.route('/paytm')
+    .post(isAuthenticatedUser, authorizeRoles('user'), processPaytmPayment); // Process payment using Paytm
+
 router.post('/paytm/callback', paytmResponse); // Handle Paytm callback response
-router.get('/status/:id', asyncWrapper(getPaymentStatus)); // Get payment status by order ID
+
+router.route('/status/:id')
+    .get(isAuthenticatedUser, authorizeRoles('user'), getPaymentStatus); // Get payment status by order ID
 
 module.exports = router;

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { asyncWrapper } = require('../middlewares/asyncWrapper');
+const { isAuthenticatedUser, authorizeRoles } = require("../middleware/auth");
 const {
     createProduct,
     getAllProducts,
@@ -17,46 +17,67 @@ const {
     getRelatedProducts,
     getProductsByPriceRange,
     searchProducts,
-    getProductCountByCategory
+    getProductCountByCategory,
+    createCategory,
+    getAllCategories,
+    createCoupon,
+    getAllCoupons,
+    createBrand,
+    getAllBrands
 } = require('../controllers/productController');
 
-// Routes
+// Routes for products
 router.route('/')
-    .post(asyncWrapper(createProduct)) // Create a new product
-    .get(asyncWrapper(getAllProducts)); // Get all products
+    .post(isAuthenticatedUser, createProduct)
+    .get(isAuthenticatedUser, getAllProducts);
 
 router.route('/admin')
-    .get(asyncWrapper(getAllProductsAdmin)); // Get all products (Admin)
+    .get(isAuthenticatedUser, authorizeRoles('admin'), getAllProductsAdmin);
 
 router.route('/:id')
-    .put(asyncWrapper(updateProduct)) // Update a product
-    .delete(asyncWrapper(deleteProduct)) // Delete a product
-    .get(asyncWrapper(getProductDetails)); // Get product details
+    .put(isAuthenticatedUser, updateProduct)
+    .delete(isAuthenticatedUser, deleteProduct)
+    .get(isAuthenticatedUser, getProductDetails);
 
 router.route('/:id/reviews')
-    .post(asyncWrapper(createProductReview)) // Create or update a product review
-    .get(asyncWrapper(getProductReviews)) // Get all reviews of a product
-    .delete(asyncWrapper(deleteReview)); // Delete a review
+    .post(isAuthenticatedUser, createProductReview)
+    .get(isAuthenticatedUser, getProductReviews)
+    .delete(isAuthenticatedUser, deleteReview);
 
 router.route('/category/:category')
-    .get(asyncWrapper(getProductsByCategory)); // Get products by category
+    .get(isAuthenticatedUser, getProductsByCategory);
 
 router.route('/brand/:brand')
-    .get(asyncWrapper(getProductsByBrand)); // Get products by brand
+    .get(isAuthenticatedUser, getProductsByBrand);
 
 router.route('/top-rated')
-    .get(asyncWrapper(getTopRatedProducts)); // Get top rated products
+    .get(isAuthenticatedUser, getTopRatedProducts);
 
 router.route('/related/:id')
-    .get(asyncWrapper(getRelatedProducts)); // Get related products
+    .get(isAuthenticatedUser, getRelatedProducts);
 
 router.route('/price-range')
-    .get(asyncWrapper(getProductsByPriceRange)); // Get products by price range
+    .get(isAuthenticatedUser, getProductsByPriceRange);
 
 router.route('/search')
-    .get(asyncWrapper(searchProducts)); // Get products by search query
+    .get(isAuthenticatedUser, searchProducts);
 
 router.route('/category/:category/count')
-    .get(asyncWrapper(getProductCountByCategory)); // Get product count by category
+    .get(isAuthenticatedUser, getProductCountByCategory);
+
+// Routes for categories
+router.route('/categories')
+    .post(isAuthenticatedUser, authorizeRoles('admin'), createCategory)
+    .get(isAuthenticatedUser, getAllCategories);
+
+// Routes for coupons
+router.route('/coupons')
+    .post(isAuthenticatedUser, authorizeRoles('admin'), createCoupon)
+    .get(isAuthenticatedUser, getAllCoupons);
+
+// Routes for brands
+router.route('/brands')
+    .post(isAuthenticatedUser, authorizeRoles('admin'), createBrand)
+    .get(isAuthenticatedUser, getAllBrands);
 
 module.exports = router;
