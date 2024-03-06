@@ -10,13 +10,17 @@ const sendEmail = require('../utils/sendEmail');
  * @access  Private
  */
 
-
 exports.newOrder = asyncErrorHandler(async (req, res, next) => {
     const { shippingInfo, orderItems, paymentInfo, totalPrice } = req.body;
 
     // Validate input data (example validation, adjust as per your needs)
     if (!shippingInfo || !orderItems || !paymentInfo || !totalPrice) {
         return next(new ErrorHandler("Invalid input data", 400));
+    }
+
+    // Check payment status
+    if (!paymentInfo.success) {
+        return next(new ErrorHandler("Payment failed", 400));
     }
 
     // Check if order with the same paymentInfo already exists
@@ -58,7 +62,6 @@ exports.newOrder = asyncErrorHandler(async (req, res, next) => {
         order,
     });
 });
-
 
 /**
  * @desc    Get details of a single order

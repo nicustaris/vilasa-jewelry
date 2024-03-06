@@ -5,6 +5,15 @@ const https = require("https");
 const Payment = require("../model/paymentModel");
 const ErrorHandler = require("../utils/errorHandler");
 const { v4: uuidv4 } = require("uuid");
+const Razorpay = require("razorpay");
+
+/**
+ * Initialize Razorpay instance
+ */
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
 
 /**
  * @desc    Process payment using Stripe
@@ -136,6 +145,48 @@ exports.paytmResponse = (req, res, next) => {
   } else {
     console.log("Checksum Mismatched");
   }
+};
+
+/**
+ * @desc    Process payment using Razorpay
+ * @route   POST /api/payments/razorpay
+ * @access  Public
+ * @param   {number} amount - The payment amount
+ * @param   {string} currency - The currency for payment (optional)
+ * @param   {string} receipt - The payment receipt (optional)
+ * @param   {boolean} payment_capture - Payment capture flag (optional)
+ */
+exports.processRazorpayPayment = asyncWrapper(async (req, res, next) => {
+  const { amount, currency, receipt, payment_capture } = req.body;
+
+  const options = {
+    amount: amount * 100, // Razorpay expects amount in paise
+    currency: currency || "INR",
+    receipt: receipt || uuidv4(),
+    payment_capture: payment_capture || 1, // Auto-capture payment
+  };
+
+  razorpay.orders.create(options, (err, order) => {
+    if (err) {
+      return next(new ErrorHandler("Payment Failed", 500));
+    }
+
+    res.status(200).json({
+      success: true,
+      orderId: order.id,
+      currency: order.currency,
+      amount: order.amount,
+    });
+  });
+});
+
+/**
+ * @desc    Handle Razorpay webhook response
+ * @route   POST /api/payments/razorpay/webhook
+ * @access  Public
+ */
+exports.razorpayWebhook = (req, res, next) => {
+  // Implement Razorpay webhook handling logic here
 };
 
 /**

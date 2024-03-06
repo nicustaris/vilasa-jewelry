@@ -4,6 +4,8 @@ const {
     processStripePayment,
     processPaytmPayment,
     paytmResponse,
+    processRazorpayPayment,
+    razorpayWebhook,
     getPaymentStatus
 } = require('../controllers/paymentController');
 const { isAuthenticatedUser, authorizeRoles } = require("../middleware/auth");
@@ -15,7 +17,14 @@ router.route('/stripe')
 router.route('/paytm')
     .post(isAuthenticatedUser, authorizeRoles('user'), processPaytmPayment); // Process payment using Paytm
 
-router.post('/paytm/callback', paytmResponse); // Handle Paytm callback response
+router.route('/paytm/callback')
+    .post(paytmResponse); // Handle Paytm callback response
+
+router.route('/razorpay')
+    .post(isAuthenticatedUser, authorizeRoles('user'), processRazorpayPayment); // Process payment using Razorpay
+
+router.route('/razorpay/webhook')
+    .post(razorpayWebhook); // Handle Razorpay webhook response
 
 router.route('/status/:id')
     .get(isAuthenticatedUser, authorizeRoles('user'), getPaymentStatus); // Get payment status by order ID
