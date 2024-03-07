@@ -55,6 +55,7 @@ exports.newOrder = asyncErrorHandler(async (req, res, next) => {
         // logger.error('Failed to send email notification:', error);
         // Or integrate with Sentry:
         // Sentry.captureException(error);
+        return next(new ErrorHandler("Failed to send email notification", 500));
     }
 
     res.status(201).json({
@@ -62,12 +63,6 @@ exports.newOrder = asyncErrorHandler(async (req, res, next) => {
         order,
     });
 });
-
-/**
- * @desc    Get details of a single order
- * @route   GET /api/orders/:id
- * @access  Private
- */
 
 
 /**

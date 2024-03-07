@@ -59,7 +59,7 @@ exports.processPaytmPayment = asyncWrapper(async (req, res, next) => {
   params["ORDER_ID"] = "oid" + uuidv4();
   params["CUST_ID"] = process.env.PAYTM_CUST_ID;
   params["TXN_AMOUNT"] = JSON.stringify(amount);
-  params["CALLBACK_URL"] = `https://${req.get("host")}/api/v1/payments/paytm/callback`;
+  params["CALLBACK_URL"] = `https://${req.get("host")}/api/vilasa-v1/payments/paytm/callback`;
   params["EMAIL"] = email;
   params["MOBILE_NO"] = phoneNo;
 

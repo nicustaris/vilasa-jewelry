@@ -20,6 +20,7 @@ const chat = require("./routes/chatRoute");
 const dyimg = require("./routes/dynamicImageRoutes");
 const dyurl = require("./routes/urlRoutes");
 const invoice = require("./routes/invoiceRoute");
+const enquiry = require("./routes/enquiryRoute")
 const ErrorHandler = require('./utils/errorHandler');
 
 // Middleware setup
@@ -42,6 +43,7 @@ app.use("/api/vilasa-v1/chat/v.0.0.1",chat);
 app.use("/api/vilasa-v1/db-img/vilasa", dyimg);
 app.use("/api/vilasa-v1/db-url/vilasa", dyurl);
 app.use("/api/vilasa-v1/order/report",invoice);
+app.use("/api/vilasa-v1/venquiry/f1",enquiry);
 
 // Middleware to expose endpoint list only in development mode
 
