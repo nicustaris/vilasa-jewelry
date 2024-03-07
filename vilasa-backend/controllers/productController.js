@@ -3,96 +3,119 @@ const Brand = require('../model//Brand');
 const Category = require('../model/Category');
 const Coupon = require('../model/Coupon');
 const ErrorHandler = require("../utils/errorHandler");
-const asyncWrapper = require("../middleware/asyncErrorHandler");
-const ApiFeatures = require("../utils/searchFeatures");
+const asyncErrorHandler = require("../middleware/asyncErrorHandler");
+const SearchFeatures = require("../utils/searchFeatures");
 const cloudinary = require("cloudinary");
+
 
 /**
  * @route   POST /api/products
  * @desc    Create a new product
  * @access  Private (Admin)
  */
-exports.createProduct = asyncWrapper(async (req, res) => {
-  // Ensure that the request contains product data
-  if (!req.body) {
-    return next(new ErrorHandler(400, 'Product data is required'));
-  }
-
-  // Extract images from the request body
-  let images = req.body.images || [];
-
-  // Upload product images to Cloudinary
-  const uploadImages = async (images) => {
-    const imageLinks = [];
-
-    // Upload images in batches to respect Cloudinary's upload limits
-    for (let i = 0; i < images.length; i += 3) {
-      const chunk = images.slice(i, i + 3);
-      const uploadPromises = chunk.map(async (img) => {
-        try {
-          const result = await cloudinary.uploader.upload(img, { folder: 'Products' });
-          imageLinks.push({ product_id: result.public_id, url: result.secure_url });
-        } catch (error) {
-          throw new ErrorHandler(500, 'Failed to upload product images to Cloudinary');
-        }
-      });
-      await Promise.all(uploadPromises);
+exports.createProduct = asyncErrorHandler(async (req, res) => {
+  try {
+    // Ensure that the request contains product data
+    if (!req.body) {
+      throw new ErrorHandler(400, 'Product data is required');
     }
 
-    return imageLinks;
-  };
+    // Extract images from the request body
+    let images = req.body.images || [];
 
-  // Call the function to upload images
-  const imagesLinks = await uploadImages(images);
+    // Upload product images to Cloudinary
+    const uploadImages = async (images) => {
+      const imageLinks = [];
 
-  // Prepare product data with image links
-  const productData = { ...req.body, user: req.user.id, images: imagesLinks };
+      // Upload images in batches to respect Cloudinary's upload limits
+      for (let i = 0; i < images.length; i += 3) {
+        const chunk = images.slice(i, i + 3);
+        const uploadPromises = chunk.map(async (img) => {
+          try {
+            const result = await cloudinary.uploader.upload(img, { folder: 'Products' });
+            imageLinks.push({ public_id: result.public_id, url: result.secure_url });
+          } catch (error) {
+            console.error('Failed to upload image to Cloudinary:', error.message);
+            throw new ErrorHandler(500, 'Failed to upload product images to Cloudinary');
+          }
+        });
+        await Promise.all(uploadPromises);
+      }
 
-  // Create the new product
-  const product = await ProductModel.create(productData);
+      return imageLinks;
+    };
 
-  // Send success response
-  res.status(201).json({ success: true, data: product });
+    // Call the function to upload images
+    const imagesLinks = await uploadImages(images);
+
+    // Prepare product data with image links
+    const productData = { ...req.body, user: req.user.id, images: imagesLinks };
+
+    // Create the new product
+    const product = await ProductModel.create(productData);
+
+    // Send success response
+    res.status(201).json({ success: true, data: product });
+  } catch (error) {
+    // Send error response
+    res.status(error.statusCode || 500).json({ success: false, message: error.message });
+  }
 });
 
 /**
- * @route   GET /api/products
- * @desc    Get all products
- * @access  Public
+ * Get all products with pagination
+ * @param {Request} req The request object
+ * @param {Response} res The response object
  */
-exports.getAllProducts = asyncWrapper(async (req, res) => {
-  const resultPerPage = 6; // Number of products visible per page
-  const productsCount = await ProductModel.countDocuments(); // Get total number of products
+exports.getAllProducts = async (req, res) => {
+  // Parse and validate the resultPerPage parameter
+  const resultPerPage = parseInt(req.query.resultPerPage) || 6;
+  if (resultPerPage < 1) {
+    return res.status(400).json({ success: false, message: "Invalid resultPerPage value" });
+  }
 
-  // Create an instance of the ApiFeatures class, passing the ProductModel.find() query and req.query (queryString)
-  const apiFeature = new ApiFeatures(ProductModel.find(), req.query)
-    .search() // Apply search filter based on the query parameters
-    .filter(); // Apply additional filters based on the query parameters
+  // Parse and validate the page parameter
+  const page = parseInt(req.query.page) || 1;
+  if (page < 1) {
+    return res.status(400).json({ success: false, message: "Invalid page value" });
+  }
 
-  let products = await apiFeature.query; // Fetch the products based on the applied filters and search
+  try {
+    // Count total number of products
+    const productsCount = await ProductModel.countDocuments();
 
-  let filteredProductCount = products.length; // Number of products after filtering (for pagination)
+    // Calculate skip value based on page number and resultPerPage
+    const skip = (page - 1) * resultPerPage;
 
-  apiFeature.Pagination(resultPerPage); // Apply pagination to the products
+    // Fetch products with pagination
+    const products = await ProductModel.find()
+      .skip(skip)
+      .limit(resultPerPage);
 
-  // Mongoose no longer allows executing the same query object twice, so use .clone() to retrieve the products again
-  products = await apiFeature.query.clone(); // Retrieve the paginated products
+    // Calculate total pages
+    const totalPages = Math.ceil(productsCount / resultPerPage);
 
-  res.status(200).json({
-    success: true,
-    products: products,
-    productsCount: productsCount,
-    resultPerPage: resultPerPage,
-    filteredProductCount: filteredProductCount,
-  });
-});
+    res.status(200).json({
+      success: true,
+      products: products,
+      productsCount: productsCount,
+      resultPerPage: resultPerPage,
+      currentPage: page,
+      totalPages: totalPages,
+      filteredProductCount: products.length,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+}
+
 
 /**
  * @route   GET /api/products/admin
  * @desc    Get all products (Admin)
  * @access  Private (Admin)
  */
-exports.getAllProductsAdmin = asyncWrapper(async (req, res) => {
+exports.getAllProductsAdmin = asyncErrorHandler(async (req, res) => {
   const products = await ProductModel.find();
 
   res.status(200).json({  
@@ -106,7 +129,7 @@ exports.getAllProductsAdmin = asyncWrapper(async (req, res) => {
  * @desc    Update a product
  * @access  Private (Admin)
  */
-exports.updateProduct = asyncWrapper(async (req, res, next) => {
+exports.updateProduct = asyncErrorHandler(async (req, res, next) => {
   // Find the product by ID
   let product = await ProductModel.findById(req.params.id);
 
@@ -168,7 +191,7 @@ exports.updateProduct = asyncWrapper(async (req, res, next) => {
  * @desc    Delete a product
  * @access  Private (Admin)
  */
-exports.deleteProduct = asyncWrapper(async (req, res, next) => {
+exports.deleteProduct = asyncErrorHandler(async (req, res, next) => {
   const productId = req.params.id;
 
   // Find the product by ID
@@ -207,7 +230,7 @@ exports.deleteProduct = asyncWrapper(async (req, res, next) => {
  * @desc    Get product details
  * @access  Public
  */
-exports.getProductDetails = asyncWrapper(async (req, res, next) => {
+exports.getProductDetails = asyncErrorHandler(async (req, res, next) => {
   try {
     const productId = req.params.id;
 
@@ -236,7 +259,7 @@ exports.getProductDetails = asyncWrapper(async (req, res, next) => {
 //  * @desc    Create or update a product review
 //  * @access  Private
 //  */
-// exports.createProductReview = asyncWrapper(async (req, res, next) => {
+// exports.createProductReview = asyncErrorHandler(async (req, res, next) => {
 //   const { ratings, comment, productId, title, recommend } = req.body;
 //   const review = {
 //     userId: req.user._id,
@@ -292,7 +315,7 @@ exports.getProductDetails = asyncWrapper(async (req, res, next) => {
  * @desc    Create or update a product review
  * @access  Private
  */
-exports.createProductReview = asyncWrapper(async (req, res, next) => {
+exports.createProductReview = asyncErrorHandler(async (req, res, next) => {
   try {
     const { ratings, comment, productId, title, recommend } = req.body;
     const review = {
@@ -348,7 +371,7 @@ exports.createProductReview = asyncWrapper(async (req, res, next) => {
  * @desc    Get all reviews of a product
  * @access  Public
  */
-exports.getProductReviews = asyncWrapper(async (req, res, next) => {
+exports.getProductReviews = asyncErrorHandler(async (req, res, next) => {
   try {
     // Find the product by ID
     const productId = req.params.id;
@@ -376,7 +399,7 @@ exports.getProductReviews = asyncWrapper(async (req, res, next) => {
  * @desc    Delete a review
  * @access  Private
  */
-exports.deleteReview = asyncWrapper(async (req, res, next) => {
+exports.deleteReview = asyncErrorHandler(async (req, res, next) => {
   try {
     // Find the product by ID
     const productId = req.params.id;
@@ -427,7 +450,7 @@ exports.deleteReview = asyncWrapper(async (req, res, next) => {
  * @desc    Get products by category
  * @access  Public
  */
-exports.getProductsByCategory = asyncWrapper(async (req, res, next) => {
+exports.getProductsByCategory = asyncErrorHandler(async (req, res, next) => {
   try {
       const category = req.params.category;
 
@@ -461,7 +484,7 @@ exports.getProductsByCategory = asyncWrapper(async (req, res, next) => {
  * @desc    Get products by brand
  * @access  Public
  */
-exports.getProductsByBrand = asyncWrapper(async (req, res, next) => {
+exports.getProductsByBrand = asyncErrorHandler(async (req, res, next) => {
   try {
       const brandName = req.params.brand;
 
@@ -495,7 +518,7 @@ exports.getProductsByBrand = asyncWrapper(async (req, res, next) => {
  * @desc    Get top rated products
  * @access  Public
  */
-exports.getTopRatedProducts = asyncWrapper(async (req, res, next) => {
+exports.getTopRatedProducts = asyncErrorHandler(async (req, res, next) => {
     const products = await ProductModel.find().sort({ ratings: -1 }).limit(10);
 
     res.status(200).json({
@@ -509,7 +532,7 @@ exports.getTopRatedProducts = asyncWrapper(async (req, res, next) => {
  * @desc    Get related products
  * @access  Public
  */
-exports.getRelatedProducts = asyncWrapper(async (req, res, next) => {
+exports.getRelatedProducts = asyncErrorHandler(async (req, res, next) => {
     const productId = req.params.id;
     const product = await ProductModel.findById(productId);
     const relatedProducts = await ProductModel.find({
@@ -528,7 +551,7 @@ exports.getRelatedProducts = asyncWrapper(async (req, res, next) => {
  * @desc    Get products by price range
  * @access  Public
  */
-exports.getProductsByPriceRange = asyncWrapper(async (req, res, next) => {
+exports.getProductsByPriceRange = asyncErrorHandler(async (req, res, next) => {
     const { minPrice, maxPrice } = req.query;
     const products = await ProductModel.find({
         price: { $gte: minPrice, $lte: maxPrice }
@@ -545,22 +568,30 @@ exports.getProductsByPriceRange = asyncWrapper(async (req, res, next) => {
  * @desc    Get products by search query
  * @access  Public
  */
-exports.searchProducts = asyncWrapper(async (req, res, next) => {
-    const keyword = req.query.keyword;
-    const products = await ProductModel.find({ $text: { $search: keyword } });
-
+exports.searchProducts = async (req, res, next) => {
+  try {
+    const apiFeature = new SearchFeatures(ProductModel.find(), req.query)
+      .fuzzySearch() // Apply search filter based on the query parameters
+      .filter(); // Apply additional filters based on the query parameters
+  
+    let products = await apiFeature.query; // Fetch the products based on the applied filters and search
+  
     res.status(200).json({
-        success: true,
-        products: products,
+      success: true,
+      products: products,
     });
-});
+  } catch (error) {
+    next(new ErrorHandler(error.message, 500)); // Handle any errors
+  }
+};
+
 
 /**
  * @route   GET /api/products/category/:category/count
  * @desc    Get product count by category
  * @access  Public
  */
-exports.getProductCountByCategory = asyncWrapper(async (req, res, next) => {
+exports.getProductCountByCategory = asyncErrorHandler(async (req, res, next) => {
     const category = req.params.category;
     const productCount = await ProductModel.countDocuments({ category: category });
 
@@ -571,49 +602,7 @@ exports.getProductCountByCategory = asyncWrapper(async (req, res, next) => {
 });
 
 
-// Create a new category
-exports.createCategory = async (req, res, next) => {
-  try {
-    const { title } = req.body;
-    const category = await Category.create({ title });
-    res.status(201).json({ success: true, category });
-  } catch (error) {
-    next(new ErrorHandler(error.message, 400));
-  }
-};
-
-// Get all categories
-exports.getAllCategories = async (req, res, next) => {
-  try {
-    const categories = await Category.find();
-    res.status(200).json({ success: true, categories });
-  } catch (error) {
-    next(new ErrorHandler(error.message, 500));
-  }
-};
-
-
-// Create a new coupon
-exports.createCoupon = async (req, res, next) => {
-  try {
-    const { name, expiry, discount } = req.body;
-    const coupon = await Coupon.create({ name, expiry, discount });
-    res.status(201).json({ success: true, coupon });
-  } catch (error) {
-    next(new ErrorHandler(error.message, 400));
-  }
-};
-
-// Get all coupons
-exports.getAllCoupons = async (req, res, next) => {
-  try {
-    const coupons = await Coupon.find();
-    res.status(200).json({ success: true, coupons });
-  } catch (error) {
-    next(new ErrorHandler(error.message, 500));
-  }
-};
-
+// Brand Controller
 
 // Create a new brand
 exports.createBrand = async (req, res, next) => {
@@ -633,5 +622,137 @@ exports.getAllBrands = async (req, res, next) => {
     res.status(200).json({ success: true, brands });
   } catch (error) {
     next(new ErrorHandler(error.message, 500));
+  }
+};
+
+// Update a brand by ID
+exports.updateBrand = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { title, description, picture } = req.body;
+    const updatedBrand = await Brand.findByIdAndUpdate(id, { title, description, picture }, { new: true });
+    if (!updatedBrand) {
+      return res.status(404).json({ success: false, message: 'Brand not found' });
+    }
+    res.status(200).json({ success: true, brand: updatedBrand });
+  } catch (error) {
+    next(new ErrorHandler(error.message, 400));
+  }
+};
+
+// Delete a brand by ID
+exports.deleteBrand = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const deletedBrand = await Brand.findByIdAndDelete(id);
+    if (!deletedBrand) {
+      return res.status(404).json({ success: false, message: 'Brand not found' });
+    }
+    res.status(200).json({ success: true, message: 'Brand deleted successfully' });
+  } catch (error) {
+    next(new ErrorHandler(error.message, 400));
+  }
+};
+
+// Category Controller
+
+// Create a new category
+exports.createCategory = async (req, res, next) => {
+  try {
+    const { title } = req.body;
+    const category = await Category.create({ title });
+    res.status(201).json({ success: true, category });
+  } catch (error) {
+    next(new ErrorHandler(error.message, 400));
+  }
+};
+
+// Get all categories
+exports.getAllCategories = async (req, res, next) => {
+  try {
+    const categories = await Category.find();
+    if (!categories || categories.length === 0) {
+      return res.status(404).json({ success: false, message: 'No categories found' });
+    }
+    res.status(200).json({ success: true, categories });
+  } catch (error) {
+    next(new ErrorHandler(error.message, 500));
+  }
+};
+
+// Update a category by ID
+exports.updateCategory = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { title } = req.body;
+    const updatedCategory = await Category.findByIdAndUpdate(id, { title }, { new: true });
+    if (!updatedCategory) {
+      return res.status(404).json({ success: false, message: 'Category not found' });
+    }
+    res.status(200).json({ success: true, category: updatedCategory });
+  } catch (error) {
+    next(new ErrorHandler(error.message, 400));
+  }
+};
+
+// Delete a category by ID
+exports.deleteCategory = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const deletedCategory = await Category.findByIdAndDelete(id);
+    if (!deletedCategory) {
+      return res.status(404).json({ success: false, message: 'Category not found' });
+    }
+    res.status(200).json({ success: true, message: 'Category deleted successfully' });
+  } catch (error) {
+    next(new ErrorHandler(error.message, 400));
+  }
+};
+
+// Coupon Controller
+
+// Create a new coupon
+exports.createCoupon = async (req, res, next) => {
+  try {
+    const { name, expiry, discount } = req.body;
+    const coupon = await Coupon.create({ name, expiry, discount });
+    res.status(201).json({ success: true, coupon });
+  } catch (error) {
+    next(new ErrorHandler(error.message, 400));
+  }
+};
+
+// Get all coupons
+exports.getAllCoupons = asyncErrorHandler(async (req, res, next) => {
+  const coupons = await Coupon.find().clone();
+  res.status(200).json({ success: true, coupons });
+});
+
+// Update a coupon by ID
+exports.updateCoupon = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { name, expiry, discount } = req.body;
+    const updatedCoupon = await Coupon.findByIdAndUpdate(id, { name, expiry, discount }, { new: true });
+    if (!updatedCoupon) {
+      return res.status(404).json({ success: false, message: 'Coupon not found' });
+    }
+    res.status(200).json({ success: true, coupon: updatedCoupon });
+  } catch (error) {
+    next(new ErrorHandler(error.message, 400));
+  }
+};
+
+// Delete a coupon by ID
+exports.deleteCoupon = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const deletedCoupon = await Coupon.findByIdAndDelete(id);
+    if (!deletedCoupon) {
+      return res.status(404).json({ success: false, message: 'Coupon not found' });
+    }
+    res.status(200).json({ success: true, message: 'Coupon deleted successfully' });
+  } catch (error) {
+    next(new ErrorHandler(error.message, 400));
   }
 };

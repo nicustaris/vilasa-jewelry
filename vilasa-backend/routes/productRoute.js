@@ -23,46 +23,52 @@ const {
     createCoupon,
     getAllCoupons,
     createBrand,
-    getAllBrands
+    getAllBrands,
+    updateBrand,
+    deleteBrand,
+    updateCategory,
+    deleteCategory,
+    updateCoupon,
+    deleteCoupon
 } = require('../controllers/productController');
 
 // Routes for products
-router.route('/')
+router.route('/products')
     .post(isAuthenticatedUser, createProduct)
     .get(isAuthenticatedUser, getAllProducts);
 
-router.route('/admin')
+router.route('/products/admin')
     .get(isAuthenticatedUser, authorizeRoles('admin'), getAllProductsAdmin);
 
-router.route('/:id')
+router.route('/products/:id')
     .put(isAuthenticatedUser, updateProduct)
     .delete(isAuthenticatedUser, deleteProduct)
     .get(isAuthenticatedUser, getProductDetails);
 
-router.route('/:id/reviews')
+router.route('/products/:id/reviews')
     .post(isAuthenticatedUser, createProductReview)
     .get(isAuthenticatedUser, getProductReviews)
     .delete(isAuthenticatedUser, deleteReview);
 
-router.route('/category/:category')
+router.route('/products/category/:category')
     .get(isAuthenticatedUser, getProductsByCategory);
 
-router.route('/brand/:brand')
+router.route('/products/brand/:brand')
     .get(isAuthenticatedUser, getProductsByBrand);
 
-router.route('/top-rated')
+router.route('/products/top-rated')
     .get(isAuthenticatedUser, getTopRatedProducts);
 
-router.route('/related/:id')
+router.route('/products/related/:id')
     .get(isAuthenticatedUser, getRelatedProducts);
 
-router.route('/price-range')
+router.route('/products/price-range')
     .get(isAuthenticatedUser, getProductsByPriceRange);
 
-router.route('/search')
+router.route('/products-search/search')
     .get(isAuthenticatedUser, searchProducts);
 
-router.route('/category/:category/count')
+router.route('/products/category/:category/count')
     .get(isAuthenticatedUser, getProductCountByCategory);
 
 // Routes for categories
@@ -79,5 +85,28 @@ router.route('/coupons')
 router.route('/brands')
     .post(isAuthenticatedUser, authorizeRoles('admin'), createBrand)
     .get(isAuthenticatedUser, getAllBrands);
+
+
+router.route('/brands/:id')
+  .put(isAuthenticatedUser, authorizeRoles('admin'),updateBrand)
+  .delete(isAuthenticatedUser, authorizeRoles('admin'),deleteBrand);
+
+// Categories Routes
+router.route('/categories')
+  .post(isAuthenticatedUser, authorizeRoles('admin'),createCategory)
+  .get(isAuthenticatedUser,getAllCategories);
+
+router.route('/categories/:id')
+  .put(isAuthenticatedUser, authorizeRoles('admin'),updateCategory)
+  .delete(isAuthenticatedUser, authorizeRoles('admin'),deleteCategory);
+
+// Coupons Routes
+router.route('/coupons')
+  .post(isAuthenticatedUser, authorizeRoles('admin'),createCoupon)
+  .get(isAuthenticatedUser,getAllCoupons);
+
+router.route('/coupons/:id')
+  .put(isAuthenticatedUser, authorizeRoles('admin'),updateCoupon)
+  .delete(isAuthenticatedUser, authorizeRoles('admin'),deleteCoupon);
 
 module.exports = router;

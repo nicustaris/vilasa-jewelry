@@ -34,7 +34,7 @@ app.use(cors()); // Middleware for enabling CORS
 app.use(errorMiddleware);
 
 // Route setup
-app.use("/api/vilasa-v1/product", product); // Product routes
+app.use("/api/vilasa-v1/vproduct", product); // Product routes
 app.use("/api/vilasa-v1/user", user); // User routes
 app.use("/api/vilasa-v1/order", order); // Order routes
 app.use("/api/vilasa-v1/payment", payment); // Payment routes

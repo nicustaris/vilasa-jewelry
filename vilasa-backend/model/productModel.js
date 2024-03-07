@@ -8,7 +8,10 @@ const mongoose = require('mongoose');
  */
 const productSchema = new mongoose.Schema({
   // ID for the product (auto-generated)
-  _id: mongoose.Schema.Types.ObjectId,
+  _id: {
+    type: mongoose.Schema.Types.ObjectId,
+    auto: true
+  },
 
   // Jewelry name
   name: {
