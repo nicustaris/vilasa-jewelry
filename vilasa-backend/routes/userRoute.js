@@ -11,7 +11,8 @@ const {
     getAllUsers,
     getUserById,
     updateUserById,
-    deleteUserById
+    deleteUserById,
+    verifyEmail
 } = require('../controllers/userController');
 
 // Rate limit configuration
@@ -26,6 +27,9 @@ const {isAuthenticatedUser,authorizeRoles} = require('../middleware/auth')
 // Routes for user authentication and management
 router.route('/register')
     .post(registerUser); // Register a new user
+    
+router.route('/verify-email/:token')
+    .get(verifyEmail);
 
 router.route('/login')
     .post(loginUser); // Login user

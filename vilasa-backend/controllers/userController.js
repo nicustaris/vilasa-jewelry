@@ -11,13 +11,13 @@ const sendJWtToken = require('../utils/JwtToken')
 exports.registerUser = asyncErrorHandler(async (req, res, next) => {
     const { name, email, password, gender, avatar } = req.body;
 
-    // Check if the email is already registered
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-        return next(new ErrorHandler('User already exists with this email', 400));
-    }
-
     try {
+        // Check if the email is already registered
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return next(new ErrorHandler('User already exists with this email', 400));
+        }
+
         // Upload avatar to Cloudinary asynchronously
         const avatarUploadPromise = cloudinary.v2.uploader.upload(avatar, {
             folder: 'avatars',
@@ -25,12 +25,13 @@ exports.registerUser = asyncErrorHandler(async (req, res, next) => {
             crop: 'scale',
         });
 
-        // Create the new user while avatar upload is in progress
-        const newUser = await User.create({
+        // Create the new user without saving to database yet
+        const newUser = new User({
             name,
             email,
             password,
             gender,
+            emailVerified: false, // Set emailVerified to false initially
         });
 
         // Wait for avatar upload to complete
@@ -41,22 +42,54 @@ exports.registerUser = asyncErrorHandler(async (req, res, next) => {
             public_id: avatarUpload.public_id,
             url: avatarUpload.secure_url,
         };
+
+        // Generate and save verification token
+        const verificationToken = newUser.getVerificationToken();
         await newUser.save();
 
-        // Send welcome email to the new user asynchronously
-        sendEmail({
+        // Send verification email to the new user
+        const verificationUrl = `${req.protocol}://${req.get('host')}/api/vilasa-v1/user/verify-email/${verificationToken}`;
+        const message = `Please click on the following link to verify your email address: ${verificationUrl}`;
+        await sendEmail({
             email: newUser.email,
-            subject: 'Welcome to Our Platform!',
-            message: `Hello ${newUser.name},\n\nWelcome to our platform. We're excited to have you on board!`,
-        }).catch(console.error); // Error handling for email sending
+            subject: 'Email Verification',
+            message
+        });
 
-        // Send response with JWT token
-        sendJWtToken(newUser, 201, res);
+        // Respond with success message
+        res.status(201).json({
+            success: true,
+            message: 'Account created successfully. Please verify your email address.',
+        });
     } catch (error) {
-        next(error); // Pass any error to error handling middleware
+        next(new ErrorHandler(error.message, 500)); // Pass any error to error handling middleware with status code 500
     }
 });
 
+// Verification route
+exports.verifyEmail = asyncErrorHandler(async (req, res, next) => {
+    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+    const user = await User.findOne({ verificationToken: hashedToken, verificationTokenExpires: { $gt: Date.now() } });
+
+    if (!user) {
+        return next(new ErrorHandler('Invalid or expired verification token', 400)); // Handle invalid or expired token
+    }
+
+    // Mark email as verified
+    user.emailVerified = true;
+    user.verificationToken = undefined;
+    user.verificationTokenExpires = undefined;
+
+    try {
+        // Save the user data after email verification
+        await user.save();
+        
+        // Respond with success message
+        res.status(200).json({ success: true, message: 'Email verified successfully' });
+    } catch (error) {
+        next(new ErrorHandler(error.message, 500)); // Pass any error to error handling middleware with status code 500
+    }
+});
 // Login user
 exports.loginUser = asyncErrorHandler(async (req, res, next) => {
     const { email, password } = req.body;
