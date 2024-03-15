@@ -35,7 +35,7 @@ const {
 // Routes for products
 router.route('/products')
     .post(isAuthenticatedUser, createProduct)
-    .get(isAuthenticatedUser, getAllProducts);
+    .get( getAllProducts);
 
 router.route('/products/admin')
     .get(isAuthenticatedUser, authorizeRoles('admin'), getAllProductsAdmin);
@@ -43,7 +43,7 @@ router.route('/products/admin')
 router.route('/products/:id')
     .put(isAuthenticatedUser, updateProduct)
     .delete(isAuthenticatedUser, deleteProduct)
-    .get(isAuthenticatedUser, getProductDetails);
+    .get( getProductDetails);
 
 router.route('/products/:id/reviews')
     .post(isAuthenticatedUser, createProductReview)
@@ -51,25 +51,25 @@ router.route('/products/:id/reviews')
     .delete(isAuthenticatedUser, deleteReview);
 
 router.route('/products/category/:category')
-    .get(isAuthenticatedUser, getProductsByCategory);
+    .get( getProductsByCategory);
 
 router.route('/products/brand/:brand')
-    .get(isAuthenticatedUser, getProductsByBrand);
+    .get( getProductsByBrand);
 
 router.route('/products/top-rated')
-    .get(isAuthenticatedUser, getTopRatedProducts);
+    .get( getTopRatedProducts);
 
 router.route('/products/related/:id')
-    .get(isAuthenticatedUser, getRelatedProducts);
+    .get( getRelatedProducts);
 
 router.route('/products/price-range')
-    .get(isAuthenticatedUser, getProductsByPriceRange);
+    .get( getProductsByPriceRange);
 
 router.route('/products-search/search')
-    .get(isAuthenticatedUser, searchProducts);
+    .get( searchProducts);
 
 router.route('/products/category/:category/count')
-    .get(isAuthenticatedUser, getProductCountByCategory);
+    .get(getProductCountByCategory);
 
 // Routes for categories
 router.route('/categories')

@@ -64,7 +64,7 @@ exports.processPaytmPayment = asyncWrapper(async (req, res, next) => {
   params["MOBILE_NO"] = phoneNo;
 
   let paytmChecksum = paytm.generateSignature(
-    params,
+    JSON.stringify(params),
     process.env.PAYTM_MERCHANT_KEY
   );
   paytmChecksum

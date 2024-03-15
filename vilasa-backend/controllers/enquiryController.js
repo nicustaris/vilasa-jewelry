@@ -55,5 +55,29 @@ const getOwnEnquiries = async (req, res, next) => {
       res.status(500).json({ success: false, message: 'Internal server error.' });
     }
   };
+  // Delete an enquiry by ID
+const deleteEnquiry = async (req, res, next) => {
+  const { enquiryId } = req.params;
+
+  try {
+    // Find the enquiry by ID and delete it
+    const deletedEnquiry = await Enquiry.findByIdAndDelete(enquiryId);
+
+    if (!deletedEnquiry) {
+      return res.status(404).json({ success: false, message: 'Enquiry not found.' });
+    }
+
+    // Delete associated chat messages
+    await Chat.deleteMany({ enquiry: enquiryId });
+
+    // Respond with success message and the deleted enquiry
+    res.status(200).json({ success: true, message: 'Enquiry and associated chat messages deleted successfully.', data: deletedEnquiry });
+  } catch (error) {
+    // Handle errors
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Internal server error.' });
+  }
+};
+
   
-  module.exports = {createEnquiry,getAllEnquiries,getOwnEnquiries };  
+  module.exports = {createEnquiry,getAllEnquiries,getOwnEnquiries,deleteEnquiry };  
