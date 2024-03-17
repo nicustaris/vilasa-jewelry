@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useState } from "react";
 
 import { FaCloudDownloadAlt } from "react-icons/fa";
 import { MdOutlineCloudUpload } from "react-icons/md";
 import Input from "./../Input/Input";
-
 import apiClient from "../../../utils/api-client.js";
-import { useCookies } from "react-cookie";
+import { useDispatch, useSelector } from "react-redux";
+import { createProduct } from "../../../store/product/productSlice.js";
 
 const AddProduct = () => {
   const [productData, setProductData] = useState({
@@ -34,51 +33,13 @@ const AddProduct = () => {
     numOfReviews: 0,
   });
 
-  const [cookiesToken] = useCookies(["token"]);
+  const dispatch = useDispatch();
+  const { errors } = useSelector((state) => state.product);
 
-  // Access specific cookie value
-  const token = cookiesToken.token;
-  console.log("PRODUCT PAGE TOKEN", token);
-
-  const [cookies, setCookie, removeCookie] = useCookies(["token"]);
-
-  const handleSubmit = async (e) => {
+  const handleCreateProduct = async (e) => {
     e.preventDefault();
     try {
-      // Retrieve token from cookies
-      const tokenCookie = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("token="));
-      const token = tokenCookie ? tokenCookie.split("=")[1] : null;
-
-      // Check if token is available
-      if (!token) {
-        console.error("Token not found. Please log in.");
-        return;
-      }
-
-      // Make POST request with product data
-      const response = await axios
-        .post(
-          "http://localhost:5000/api/vilasa-v1/vproduct/products",
-          productData,
-          {
-            withCredentials: true,
-            headers: {
-              "Content-Type": "application/json",
-              // "Access-Control-Allow-Origin": "*",
-            }, // Send cookies with the request
-          }
-        )
-        .then((response) => {
-          // Handle response
-          console.log(response);
-        })
-        .catch((error) => {
-          // Handle errors
-        });
-
-      // await apiClient.post("/vilasa-v1/vproduct/products", productData);
+      dispatch(createProduct(productData));
     } catch (error) {
       console.error("Error2:", error);
     }
@@ -87,7 +48,7 @@ const AddProduct = () => {
   return (
     <div className="w-full h-full p-10 bg-gray-100">
       <h1 className="text-2xl font-bold">Dashboard / Add new product</h1>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleCreateProduct}>
         <div className="grid grid-cols-4 mt-10">
           <div className="col-span-3 w-auto px-3">
             <div className="">
