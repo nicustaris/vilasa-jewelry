@@ -4,10 +4,10 @@ import apiClient from "../../utils/api-client";
 export const createProduct = createAsyncThunk(
   "CREATE_PRODUCT",
   async (productData, thunkAPI) => {
-    await apiClient.post("/vilasa-v1/vproduct/products", productData);
     try {
+      await apiClient.post("/vilasa-v1/vproduct/products", productData);
     } catch (error) {
-      return thunkAPI.rejectWithValue(error);
+      return thunkAPI.rejectWithValue(error.response.data.message);
     }
   }
 );
@@ -24,22 +24,19 @@ const productSlice = createSlice({
   name: "product",
   initialState,
   extraReducers: (builder) => {
-    builder.addCase(createProduct.pending, (state) => {
-      state.isLoading = true;
-    });
-  },
-  extraReducers: (builder) => {
-    builder.addCase(createProduct.fulfilled, (state) => {
-      state.isLoading = false;
-      state.isError = null;
-    });
-  },
-  extraReducers: (builder) => {
-    builder.addCase(createProduct.rejected, (state, action) => {
-      state.isLoading = false;
-      state.isError = true;
-      state.errors = action.payload;
-    });
+    builder
+      .addCase(createProduct.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(createProduct.fulfilled, (state) => {
+        state.isLoading = false;
+        state.isError = null;
+      })
+      .addCase(createProduct.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.errors = action.payload;
+      });
   },
 });
 

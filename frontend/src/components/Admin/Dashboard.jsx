@@ -5,7 +5,7 @@ import AddProduct from "./Products/AddProduct";
 
 const Dashboard = () => {
   return (
-    <div className="flex w-full h-screen">
+    <div className="flex w-full h-full">
       <div className="w-[20%] min-w-[200px] flex flex-col bg-slate-700 text-white">
         <h1 className="text-xl font-bold m-5 mx-auto">VJ Panel</h1>
         <Sidebar />

@@ -11,3 +11,7 @@
 html {
   scroll-behavior: smooth;
 }
+
+.custum-input {
+  @apply p-3 rounded-md mt-2 text-sm text-gray-400 w-full
+}
