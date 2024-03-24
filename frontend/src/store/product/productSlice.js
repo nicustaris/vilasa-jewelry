@@ -16,8 +16,6 @@ const initialState = {
   product: null,
   isError: false,
   isLoading: false,
-  message: "",
-  errors: null,
 };
 
 const productSlice = createSlice({

@@ -30,6 +30,39 @@ const productSchema = yup.object().shape({
 
 const AddProduct = () => {
   const dispatch = useDispatch();
+  const [images, setImages] = useState([]);
+
+  const handleImage = (event) => {
+    const files = event.target.files;
+    if (files) {
+      const imagesArray = [];
+      const promises = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const reader = new FileReader();
+
+        promises.push(
+          new Promise((resolve, reject) => {
+            reader.onload = () => {
+              imagesArray.push(reader.result);
+              resolve();
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          })
+        );
+      }
+
+      Promise.all(promises)
+        .then(() => {
+          setImages((prev) => [...prev, ...imagesArray]);
+        })
+        .catch((error) => {
+          console.error("Error reading files:", error);
+        });
+    }
+  };
 
   return (
     <Formik
@@ -45,12 +78,14 @@ const AddProduct = () => {
         product_discount: 0,
         highlights: [],
         specifications: [{ title: "", description: "" }],
+        images: images,
       }}
       validationSchema={productSchema}
       onSubmit={(productData, { resetForm }) => {
+        productData.images = images;
         try {
           dispatch(createProduct(productData));
-          resetForm();
+          // resetForm();
         } catch (error) {
           console.error("Error:", error);
         }
@@ -296,11 +331,28 @@ const AddProduct = () => {
                     </p>
                     <p className="text-xs">SVG, PNG, JPG or JPEG.</p>
                   </div>
-                  <input
-                    id="dropzone-file"
-                    type="file"
-                    className="hidden"
-                    onChange={(e) => console.log(e)}
+                  <FieldArray
+                    render={({ push, remove, form }) => (
+                      <div>
+                        <input
+                          id="dropzone-file"
+                          type="file"
+                          name="images"
+                          className="hidden"
+                          multiple
+                          onChange={(event) => handleImage(event)}
+                        />
+                        {images && images.length > 0 ? (
+                          <div className="flex space-x-2">
+                            {images.map((image, index) => (
+                              <div key={index} className="w-[40px] h-[40px]">
+                                <img src={image} />
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    )}
                   />
                 </label>
               </div>

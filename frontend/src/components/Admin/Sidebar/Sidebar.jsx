@@ -4,6 +4,7 @@ import SidebarLinks from "./SidebarLinks";
 
 import { MdOutlineDashboardCustomize } from "react-icons/md";
 import { MdOutlineArticle } from "react-icons/md";
+import { BsQuestionSquare } from "react-icons/bs";
 import { MdOutlineCategory } from "react-icons/md";
 import { MdBorderStyle } from "react-icons/md";
 import { CiDiscount1 } from "react-icons/ci";
@@ -34,6 +35,12 @@ const Sidebar = () => {
           ref: "/admin/products/delete-product",
         },
       ],
+    },
+    {
+      icon: <BsQuestionSquare size={20} />,
+      label: "Enquiries",
+      ref: "/admin/enquiries",
+      isExtended: null,
     },
     // {
     //   icon: <MdOutlineCategory size={20} />,

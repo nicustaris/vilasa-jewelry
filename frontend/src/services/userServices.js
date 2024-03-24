@@ -1,4 +1,5 @@
 import apiClient from "../utils/api-client";
+import { jwtDecode } from "jwt-decode";
 
 export const userRegister = async (user, avatar) => {
   try {
@@ -20,9 +21,19 @@ export const userLogin = async (user, setCookie) => {
   try {
     const { data } = await apiClient.post("/vilasa-v1/user/login", user);
     const token = data.token;
-    setCookie("token", token, { path: "/" });
+    localStorage.setItem("token", token);
+    // setCookie("token", token, { path: "/" });
   } catch (error) {
     console.error("Error logging in user:", error.message);
     throw error;
+  }
+};
+
+export const getUser = () => {
+  try {
+    const jwt = localStorage.getItem("token");
+    return jwtDecode(jwt);
+  } catch (error) {
+    console.log(error);
   }
 };
