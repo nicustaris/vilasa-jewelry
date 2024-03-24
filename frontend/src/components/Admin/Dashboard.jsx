@@ -4,6 +4,7 @@ import { Route, Routes } from "react-router-dom";
 
 import AddProduct from "./Products/AddProduct";
 import Enquiries from "./Enquiries/Enquiries";
+import EnquiryDetails from "./Enquiries/EnquiryDetails";
 
 const Dashboard = () => {
   return (
@@ -16,6 +17,7 @@ const Dashboard = () => {
         <Routes>
           <Route path="/products/add-product" element={<AddProduct />} />
           <Route path="/enquiries" element={<Enquiries />} />
+          <Route path="/enquiries/:id" element={<EnquiryDetails />} />
         </Routes>
       </div>
     </div>
