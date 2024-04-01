@@ -6,28 +6,35 @@ import {
   sendChatMessage,
 } from "../../../store/enquiry/enquirySlice";
 import { getUser } from "../../../services/userServices";
+import {
+  getEnquiries,
+  getEnquiryById,
+} from "../../../store/enquiries/enquiriesSlice";
 
 const EnquiryDetails = () => {
   const { id: enquiryId } = useParams();
-  const [message, setMessage] = useState("");
   const dispatch = useDispatch();
+  const [message, setMessage] = useState("");
 
-  const { enquiry, isLoading } = useSelector((state) => state.enquiry);
-  useSelector((state) => state.enquiries);
+  useEffect(() => {
+    dispatch(getEnquiryChat(enquiryId));
+    dispatch(getEnquiries());
+  }, [enquiryId]);
 
-  // User id
+  const { enquiryChat, isLoading } = useSelector((state) => state.enquiry);
+  const enquiries = useSelector((state) => getEnquiryById(state, enquiryId));
+
+  // Sender id
   // Needs further works and global state to be implemented
   // For temporar use
   const { id: userId } = getUser();
 
-  useEffect(() => {
-    dispatch(getEnquiryChat(enquiryId));
-  }, []);
+  const receiver =
+    enquiryChat?.length > 0 ? enquiryChat[0].receiver : enquiries?.user;
 
   const handleChatSubmit = (e) => {
     e.preventDefault();
 
-    const receiver = enquiry[0].receiver;
     dispatch(
       sendChatMessage({
         sender: userId,
@@ -42,7 +49,9 @@ const EnquiryDetails = () => {
 
   return (
     <div className="flex flex-col w-full h-screen p-5">
-      {enquiry?.map((enquiry) => (
+      <h2>Subject{enquiries?.subject}</h2>
+      <span>MSG {enquiries?.message}</span>
+      {enquiryChat?.map((enquiry) => (
         <div
           key={enquiry._id}
           className={`flex ${

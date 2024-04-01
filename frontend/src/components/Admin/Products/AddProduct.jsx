@@ -12,13 +12,13 @@ import { createProduct } from "./../../../store/product/productSlice";
 const productSchema = yup.object().shape({
   name: yup.string().required().min(3).max(25),
   description: yup.string().required(),
-  product_category: yup.string().required(),
-  product_brand: yup.string().required(),
-  product_stock: yup.number().required().positive().integer(),
+  category: yup.string().required(),
+  brand: yup.string().required(),
+  stock: yup.number().required().positive().integer(),
   price: yup.number().required().positive(),
   cuttedPrice: yup.number().required().positive(),
-  product_warranty: yup.number().integer(),
-  product_discount: yup.number().max(100),
+  warranty: yup.number().integer(),
+  discount: yup.number().max(100),
   highlights: yup.string().required(),
   specifications: yup.array().of(
     yup.object().shape({
@@ -28,7 +28,20 @@ const productSchema = yup.object().shape({
   ),
 });
 
-const AddProduct = () => {
+const AddProduct = ({
+  name = "",
+  description = "",
+  category = "",
+  brand = "",
+  stock = 0,
+  price = "",
+  cuttedPrice = "",
+  product_warranty = 0,
+  product_discount = 0,
+  highlights = [],
+  specifications = [{ title: "", description: "" }],
+  updateProduct = false,
+}) => {
   const dispatch = useDispatch();
   const [images, setImages] = useState([]);
 
@@ -67,24 +80,29 @@ const AddProduct = () => {
   return (
     <Formik
       initialValues={{
-        name: "",
-        description: "",
-        product_category: "",
-        product_brand: "",
-        product_stock: "",
-        price: "",
-        cuttedPrice: "",
-        product_warranty: 0,
-        product_discount: 0,
-        highlights: [],
-        specifications: [{ title: "", description: "" }],
+        name: name,
+        description: description,
+        category: category,
+        // brand: brand,
+        stock: stock,
+        price: price,
+        cuttedPrice: cuttedPrice,
+        warranty: product_warranty,
+        discount: product_discount,
+        highlights: highlights,
+        specifications: specifications,
         images: images,
       }}
       validationSchema={productSchema}
       onSubmit={(productData, { resetForm }) => {
         productData.images = images;
         try {
-          dispatch(createProduct(productData));
+          if (!updateProduct) {
+            dispatch(createProduct(productData));
+          } else {
+            console.log("PRODUCT DATA NEW", productData);
+          }
+
           // resetForm();
         } catch (error) {
           console.error("Error:", error);
@@ -126,11 +144,7 @@ const AddProduct = () => {
                 <div className="flex mt-5 space-x-5">
                   <div className="w-[33.3%]">
                     <h3 className="font-medium">Category</h3>
-                    <Field
-                      as="select"
-                      name="product_category"
-                      className="custum-input"
-                    >
+                    <Field as="select" name="category" className="custum-input">
                       <option value="">Select category</option>
                       <option value="category1">Category 1</option>
                       <option value="category2">Category 2</option>
@@ -144,11 +158,7 @@ const AddProduct = () => {
                   </div>
                   <div className="w-[33.3%]">
                     <h3 className="font-medium">Brand</h3>
-                    <Field
-                      as="select"
-                      name="product_brand"
-                      className="custum-input"
-                    >
+                    <Field as="select" name="brand" className="custum-input">
                       <option value="">Select brand</option>
                       <option value="brand1">Brand 1</option>
                       <option value="brand2">Brand 2</option>
@@ -162,11 +172,7 @@ const AddProduct = () => {
                   </div>
                   <div className="w-[33.3%]">
                     <h3 className="font-medium">Stock</h3>
-                    <Field
-                      type="text"
-                      name="product_stock"
-                      className="custum-input"
-                    />
+                    <Field type="text" name="stock" className="custum-input" />
                     {formikProps.touched.product_stock &&
                     formikProps.errors.product_stock ? (
                       <div className="text-red-500 font-medium">
@@ -197,7 +203,7 @@ const AddProduct = () => {
                   </div>
                   <div className="w-[33.3%]">
                     <h3 className="font-medium">Warranty</h3>
-                    <Field name="product_warranty" className="custum-input" />
+                    <Field name="warranty" className="custum-input" />
                     {formikProps.touched.product_warranty &&
                     formikProps.errors.product_warranty ? (
                       <div className="text-red-500 font-medium">
@@ -209,7 +215,7 @@ const AddProduct = () => {
                 <div className="flex mt-5">
                   <div className="pr-5">
                     <h3 className="font-medium">Discount</h3>
-                    <Field name="product_discount" className="custum-input" />
+                    <Field name="discount" className="custum-input" />
                     {formikProps.touched.product_discount &&
                     formikProps.errors.product_discount ? (
                       <div className="text-red-500 font-medium">

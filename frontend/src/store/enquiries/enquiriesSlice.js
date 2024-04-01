@@ -41,4 +41,10 @@ const enquiriesSlice = createSlice({
   },
 });
 
+export const getEnquiryById = (state, enquiryId) => {
+  return state.enquiries?.enquiries?.find(
+    (enquiry) => enquiry._id === enquiryId
+  );
+};
+
 export default enquiriesSlice.reducer;

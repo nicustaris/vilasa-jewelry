@@ -24,7 +24,7 @@ export const sendChatMessage = createAsyncThunk(
 );
 
 const initialState = {
-  enquiry: null,
+  enquiryChat: null,
   isLoading: false,
   isError: false,
   errors: null,
@@ -42,7 +42,7 @@ export const enquirySlice = createSlice({
       .addCase(getEnquiryChat.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isError = null;
-        state.enquiry = action.payload;
+        state.enquiryChat = action.payload;
       })
       .addCase(getEnquiryChat.rejected, (state, action) => {
         state.isLoading = false;
@@ -56,7 +56,7 @@ export const enquirySlice = createSlice({
       })
       .addCase(sendChatMessage.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.enquiry = [...state.enquiry, action.payload];
+        state.enquiryChat = [...state.enquiryChat, action.payload];
       })
       .addCase(sendChatMessage.rejected, (state, action) => {
         state.isLoading = false;

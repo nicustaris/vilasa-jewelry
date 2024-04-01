@@ -5,6 +5,8 @@ import SidebarLinks from "./SidebarLinks";
 import { MdOutlineDashboardCustomize } from "react-icons/md";
 import { MdOutlineArticle } from "react-icons/md";
 import { BsQuestionSquare } from "react-icons/bs";
+import { MdWeb } from "react-icons/md";
+
 import { MdOutlineCategory } from "react-icons/md";
 import { MdBorderStyle } from "react-icons/md";
 import { CiDiscount1 } from "react-icons/ci";
@@ -27,19 +29,27 @@ const Sidebar = () => {
           ref: "/admin/products/add-product",
         },
         {
-          name: "Update existing product",
-          ref: "/admin/products/update-product",
-        },
-        {
-          name: "Delete existing product",
-          ref: "/admin/products/delete-product",
+          name: "Manage Products",
+          ref: "/admin/products/manage-products",
         },
       ],
+    },
+    {
+      icon: <MdOutlineArticle size={20} />,
+      label: "Category and Brand",
+      ref: "/admin/products/category-and-brand",
+      isExtended: null,
     },
     {
       icon: <BsQuestionSquare size={20} />,
       label: "Enquiries",
       ref: "/admin/enquiries",
+      isExtended: null,
+    },
+    {
+      icon: <MdWeb size={20} />,
+      label: "Web Elements",
+      ref: "/admin/web-elements",
       isExtended: null,
     },
     // {

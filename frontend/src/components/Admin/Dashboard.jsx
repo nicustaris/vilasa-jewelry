@@ -5,6 +5,9 @@ import { Route, Routes } from "react-router-dom";
 import AddProduct from "./Products/AddProduct";
 import Enquiries from "./Enquiries/Enquiries";
 import EnquiryDetails from "./Enquiries/EnquiryDetails";
+import WebElements from "./WebElements/WebElements";
+import ManageProducts from "./Products/ManageProducts";
+import CategoryAndBrand from "./CategoryAndBrand/CategoryAndBrand";
 
 const Dashboard = () => {
   return (
@@ -16,8 +19,17 @@ const Dashboard = () => {
       <div className="w-[80%]">
         <Routes>
           <Route path="/products/add-product" element={<AddProduct />} />
+          <Route
+            path="/products/manage-products"
+            element={<ManageProducts />}
+          />
+          <Route
+            path="/products/category-and-brand"
+            element={<CategoryAndBrand />}
+          />
           <Route path="/enquiries" element={<Enquiries />} />
           <Route path="/enquiries/:id" element={<EnquiryDetails />} />
+          <Route path="/web-elements" element={<WebElements />} />
         </Routes>
       </div>
     </div>
