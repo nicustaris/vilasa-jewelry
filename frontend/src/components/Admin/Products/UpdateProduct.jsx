@@ -5,11 +5,12 @@ import { Formik, Form, Field, FieldArray } from "formik";
 
 import { MdOutlineCloudUpload } from "react-icons/md";
 import { FaPlus } from "react-icons/fa";
+import { CiSquareRemove } from "react-icons/ci";
 
 import { useDispatch, useSelector } from "react-redux";
 import { getBrands } from "../../../store/brands/brandsSlice";
 import { getCategories } from "../../../store/categories/categoriesSlice";
-import { getProduct } from "../../../store/product/productSlice";
+import { getProduct, updateProduct } from "../../../store/product/productSlice";
 import { useParams } from "react-router-dom";
 
 const productSchema = yup.object().shape({
@@ -17,9 +18,9 @@ const productSchema = yup.object().shape({
   description: yup.string().required(),
   category: yup.string().required(),
   brand: yup.string().required(),
-  stock: yup.number().required().positive().integer(),
+  stock: yup.number().required().integer(),
   price: yup.number().required().positive(),
-  cuttedPrice: yup.number().required().positive(),
+  cuttedPrice: yup.number().required(),
   warranty: yup.number().integer(),
   discount: yup.number().max(100),
   highlights: yup.array().required(),
@@ -55,7 +56,7 @@ const UpdateProduct = () => {
             try {
               const response = await fetch(image.url);
               if (!response.ok) {
-                throw new Error("Failed to fetch");
+                throw new Error("Failed to fetch image");
               }
               const blob = await response.blob();
               return new Promise((resolve) => {
@@ -66,7 +67,7 @@ const UpdateProduct = () => {
                 reader.readAsDataURL(blob);
               });
             } catch (error) {
-              console.error("Error fetching image:", error);
+              console.log("Error fetching image: ", error);
               return null;
             }
           })
@@ -76,8 +77,6 @@ const UpdateProduct = () => {
       fetchDataUrls();
     }
   }, [product?.images]);
-
-  console.log(images);
 
   const handleImage = (event) => {
     const files = event.target.files;
@@ -141,6 +140,11 @@ const UpdateProduct = () => {
         images: [],
       };
 
+  const filterImages = (clickedImage) => {
+    const filteredImages = images.filter((image) => image !== clickedImage);
+    setImages(filteredImages);
+  };
+
   return (
     <Formik
       enableReinitialize
@@ -148,13 +152,12 @@ const UpdateProduct = () => {
       validationSchema={productSchema}
       onSubmit={(productData, { resetForm }) => {
         productData.images = images;
-        console.log(productData);
-        // try {
-        //   dispatch(createProduct(productData));
-        //   resetForm();
-        // } catch (error) {
-        //   console.error("Error:", error);
-        // }
+        try {
+          dispatch(updateProduct({ id, productData }));
+          // resetForm();
+        } catch (error) {
+          console.error("Error:", error);
+        }
       }}
     >
       {(formikProps) => (
@@ -279,7 +282,40 @@ const UpdateProduct = () => {
                   </div>
                   <div className="w-full">
                     <h3 className="font-medium">Highlights</h3>
-                    <Field name="highlights" className="custum-input" />
+                    <FieldArray name="highlights">
+                      {({ push, remove }) => (
+                        <div className="w-full">
+                          {formikProps.values.highlights.map(
+                            (highlight, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center mt-3"
+                              >
+                                <Field
+                                  name={`highlights.${index}`}
+                                  className="custum-input"
+                                  placeholder="Highlight"
+                                />
+                                <button
+                                  type="button"
+                                  className="ml-2 p-2 bg-red-500 text-white rounded-md"
+                                  onClick={() => remove(index)}
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            )
+                          )}
+                          <button
+                            type="button"
+                            className="mt-3 bg-gray-200 p-3 rounded-md"
+                            onClick={() => push("")}
+                          >
+                            <FaPlus size={25} />
+                          </button>
+                        </div>
+                      )}
+                    </FieldArray>
                     {formikProps.touched.highlights &&
                     formikProps.errors.highlights ? (
                       <div className="text-red-500 font-medium">
@@ -393,31 +429,35 @@ const UpdateProduct = () => {
                   </div>
                   <FieldArray
                     render={({ push, remove, form }) => (
-                      <div>
-                        <input
-                          id="dropzone-file"
-                          type="file"
-                          name="images"
-                          className="hidden"
-                          multiple
-                          onChange={(event) => handleImage(event)}
-                        />
-                        {images && images.length > 0 ? (
-                          <div className="flex space-x-2">
-                            {images.map((image, index) => (
-                              <div key={index} className="w-[40px] h-[40px]">
-                                <img
-                                  src={image}
-                                  alt={`Product Image ${index}`}
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
+                      <input
+                        id="dropzone-file"
+                        type="file"
+                        name="images"
+                        className="hidden"
+                        multiple
+                        onChange={(event) => handleImage(event)}
+                      />
                     )}
                   />
                 </label>
+                <div className="mt-4 w-full flex-1">
+                  {images && images.length > 0 ? (
+                    <div className="flex space-x-2">
+                      {images.map((image, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={image}
+                            onClick={() => filterImages(image)}
+                            className="w-[40px] h-[40px] rounded-sm"
+                          />
+                          <div className="absolute right-0 top-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                            <CiSquareRemove size={12} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
               </div>
             </div>
           </Form>

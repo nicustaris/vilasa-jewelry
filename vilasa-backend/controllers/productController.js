@@ -161,7 +161,7 @@ exports.updateProduct = asyncErrorHandler(async (req, res, next) => {
 
   // Delete existing images from Cloudinary
   for (let i = 0; i < product.images.length; i++) {
-    await cloudinary.v2.uploader.destroy(product.images[i].product_id);
+    await cloudinary.v2.uploader.destroy(product.images[i].public_id);
   }
 
   // Upload new images to Cloudinary
@@ -172,7 +172,7 @@ exports.updateProduct = asyncErrorHandler(async (req, res, next) => {
     });
 
     imagesLinks.push({
-      product_id: result.public_id,
+      public_id: result.public_id,
       url: result.secure_url,
     });
   }
@@ -673,13 +673,11 @@ exports.deleteBrand = async (req, res, next) => {
         .status(404)
         .json({ success: false, message: "Brand not found" });
     }
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "Brand deleted successfully",
-        brand: deletedBrand,
-      });
+    res.status(200).json({
+      success: true,
+      message: "Brand deleted successfully",
+      brand: deletedBrand,
+    });
   } catch (error) {
     next(new ErrorHandler(error.message, 400));
   }
