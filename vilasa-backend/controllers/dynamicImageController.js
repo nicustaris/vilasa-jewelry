@@ -6,14 +6,15 @@ const cloudinary = require("cloudinary").v2;
 // @access  Admin
 exports.uploadDynamicImage = async (req, res, next) => {
   try {
-    if (!req.files || Object.keys(req.files).length === 0) {
-      return res.status(400).json({ success: false, message: "No files were uploaded." });
+    const file = req.body.file;
+    if (!file || Object.keys(file).length === 0) {
+      return res
+        .status(400)
+        .json({ success: false, message: "No files were uploaded." });
     }
 
-    const file = req.files.file;
-
     // Upload image to Cloudinary
-    cloudinary.uploader.upload(file.tempFilePath, async (error, result) => {
+    cloudinary.uploader.upload(file, async (error, result) => {
       if (error) {
         return next(error);
       }
@@ -22,6 +23,7 @@ exports.uploadDynamicImage = async (req, res, next) => {
       const dynamicImage = await DynamicImage.create({
         imageUrl: result.secure_url,
         group: req.body.group,
+        url: req.body.url,
       });
 
       res.status(201).json({
@@ -85,10 +87,14 @@ exports.updateDynamicImage = async (req, res, next) => {
       });
     }
 
-    dynamicImage = await DynamicImage.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    dynamicImage = await DynamicImage.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
 
     res.status(200).json({
       success: true,
@@ -113,11 +119,12 @@ exports.deleteDynamicImage = async (req, res, next) => {
       });
     }
 
-    await dynamicImage.remove();
+    const deletedImage = await dynamicImage.remove();
 
     res.status(200).json({
       success: true,
       message: "Dynamic image deleted",
+      data: deletedImage,
     });
   } catch (error) {
     next(error);
@@ -127,24 +134,23 @@ exports.deleteDynamicImage = async (req, res, next) => {
 // @route   GET /api/dynamic-images/group/:group
 // @access  Public
 exports.getDynamicImagesByGroup = async (req, res, next) => {
-    try {
-      const { group } = req.params;
-      const dynamicImages = await DynamicImage.find({ group });
-  
-      if (!dynamicImages || dynamicImages.length === 0) {
-        return res.status(404).json({
-          success: false,
-          error: "Dynamic images not found for the specified group",
-        });
-      }
-  
-      res.status(200).json({
-        success: true,
-        count: dynamicImages.length,
-        data: dynamicImages,
+  try {
+    const { group } = req.params;
+    const dynamicImages = await DynamicImage.find({ group });
+
+    if (!dynamicImages || dynamicImages.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: "Dynamic images not found for the specified group",
       });
-    } catch (error) {
-      next(error);
     }
-  };
-  
+
+    res.status(200).json({
+      success: true,
+      count: dynamicImages.length,
+      data: dynamicImages,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

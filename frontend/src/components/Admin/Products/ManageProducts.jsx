@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import {
   deleteProduct,
   getProducts,
-} from "../../../store/product/productSlice";
+} from "../../../store/products/productsSlice";
 
 const ManageProducts = () => {
   const { products, isLoading } = useSelector((state) => state.products);
@@ -34,7 +34,7 @@ const ManageProducts = () => {
                 Created at {new Date(product?.createdAt).toLocaleDateString()}
               </p>
               <div className="space-x-2">
-                <Link to="/">
+                <Link to={`/admin/products/update-product/${product._id}`}>
                   <button className="bg-blue-500 p-1 rounded-sm text-white">
                     Update
                   </button>

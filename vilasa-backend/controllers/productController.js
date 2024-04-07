@@ -1,12 +1,11 @@
-const ProductModel = require('../model/productModel');
-const Brand = require('../model//Brand');
-const Category = require('../model/Category');
-const Coupon = require('../model/Coupon');
+const ProductModel = require("../model/productModel");
+const Brand = require("../model//Brand");
+const Category = require("../model/Category");
+const Coupon = require("../model/Coupon");
 const ErrorHandler = require("../utils/errorHandler");
 const asyncErrorHandler = require("../middleware/asyncErrorHandler");
 const SearchFeatures = require("../utils/searchFeatures");
 const cloudinary = require("cloudinary");
-
 
 /**
  * @route   POST /api/products
@@ -17,7 +16,7 @@ exports.createProduct = asyncErrorHandler(async (req, res) => {
   try {
     // Ensure that the request contains product data
     if (!req.body) {
-      throw new ErrorHandler(400, 'Product data is required');
+      throw new ErrorHandler(400, "Product data is required");
     }
 
     // Extract images from the request body
@@ -32,11 +31,22 @@ exports.createProduct = asyncErrorHandler(async (req, res) => {
         const chunk = images.slice(i, i + 3);
         const uploadPromises = chunk.map(async (img) => {
           try {
-            const result = await cloudinary.uploader.upload(img, { folder: 'Products' });
-            imageLinks.push({ public_id: result.public_id, url: result.secure_url });
+            const result = await cloudinary.uploader.upload(img, {
+              folder: "Products",
+            });
+            imageLinks.push({
+              public_id: result.public_id,
+              url: result.secure_url,
+            });
           } catch (error) {
-            console.error('Failed to upload image to Cloudinary:', error.message);
-            throw new ErrorHandler(500, 'Failed to upload product images to Cloudinary');
+            console.error(
+              "Failed to upload image to Cloudinary:",
+              error.message
+            );
+            throw new ErrorHandler(
+              500,
+              "Failed to upload product images to Cloudinary"
+            );
           }
         });
         await Promise.all(uploadPromises);
@@ -58,7 +68,9 @@ exports.createProduct = asyncErrorHandler(async (req, res) => {
     res.status(201).json({ success: true, data: product });
   } catch (error) {
     // Send error response
-    res.status(error.statusCode || 500).json({ success: false, message: error.message });
+    res
+      .status(error.statusCode || 500)
+      .json({ success: false, message: error.message });
   }
 });
 
@@ -71,13 +83,17 @@ exports.getAllProducts = async (req, res) => {
   // Parse and validate the resultPerPage parameter
   const resultPerPage = parseInt(req.query.resultPerPage) || 6;
   if (resultPerPage < 1) {
-    return res.status(400).json({ success: false, message: "Invalid resultPerPage value" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid resultPerPage value" });
   }
 
   // Parse and validate the page parameter
   const page = parseInt(req.query.page) || 1;
   if (page < 1) {
-    return res.status(400).json({ success: false, message: "Invalid page value" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid page value" });
   }
 
   try {
@@ -88,9 +104,7 @@ exports.getAllProducts = async (req, res) => {
     const skip = (page - 1) * resultPerPage;
 
     // Fetch products with pagination
-    const products = await ProductModel.find()
-      .skip(skip)
-      .limit(resultPerPage);
+    const products = await ProductModel.find().skip(skip).limit(resultPerPage);
 
     // Calculate total pages
     const totalPages = Math.ceil(productsCount / resultPerPage);
@@ -107,8 +121,7 @@ exports.getAllProducts = async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
-}
-
+};
 
 /**
  * @route   GET /api/products/admin
@@ -118,7 +131,7 @@ exports.getAllProducts = async (req, res) => {
 exports.getAllProductsAdmin = asyncErrorHandler(async (req, res) => {
   const products = await ProductModel.find();
 
-  res.status(200).json({  
+  res.status(200).json({
     success: true,
     products,
   });
@@ -168,15 +181,11 @@ exports.updateProduct = asyncErrorHandler(async (req, res, next) => {
   req.body.images = imagesLinks;
 
   // Update the product in the database
-  product = await ProductModel.findByIdAndUpdate(
-    req.params.id,
-    req.body,
-    {
-      new: true,
-      runValidators: true,
-      useFindAndModify: false,
-    }
-  );
+  product = await ProductModel.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true,
+    useFindAndModify: false,
+  });
 
   // Send response with updated product
   res.status(200).json({
@@ -184,7 +193,6 @@ exports.updateProduct = asyncErrorHandler(async (req, res, next) => {
     product: product,
   });
 });
-
 
 /**
  * @route   DELETE /api/products/:id
@@ -207,9 +215,11 @@ exports.deleteProduct = asyncErrorHandler(async (req, res, next) => {
 
   try {
     // Delete images from Cloudinary
-    await Promise.all(productImages.map(async (image) => {
-      await cloudinary.v2.uploader.destroy(image.product_id);
-    }));
+    await Promise.all(
+      productImages.map(async (image) => {
+        await cloudinary.v2.uploader.destroy(image.public_id);
+      })
+    );
 
     // Remove the product from the database
     await ProductModel.findByIdAndRemove(productId);
@@ -218,6 +228,7 @@ exports.deleteProduct = asyncErrorHandler(async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "Product deleted successfully",
+      productId,
     });
   } catch (error) {
     // Handle any errors that occur during deletion
@@ -253,7 +264,6 @@ exports.getProductDetails = asyncErrorHandler(async (req, res, next) => {
   }
 });
 
-
 // /**
 //  * @route   POST /api/products/:id/reviews
 //  * @desc    Create or update a product review
@@ -285,7 +295,7 @@ exports.getProductDetails = asyncErrorHandler(async (req, res, next) => {
 //         rev.ratings = ratings;
 //         rev.comment = comment;
 //         rev.recommend = recommend;
-        
+
 //         rev.title = title;
 //         product.numOfReviews = product.reviews.length;
 //       }
@@ -335,7 +345,9 @@ exports.createProductReview = asyncErrorHandler(async (req, res, next) => {
     }
 
     // Check if user already reviewed
-    const existingReviewIndex = product.reviews.findIndex((rev) => rev.userId.toString() === req.user._id.toString());
+    const existingReviewIndex = product.reviews.findIndex(
+      (rev) => rev.userId.toString() === req.user._id.toString()
+    );
 
     if (existingReviewIndex !== -1) {
       // Update the existing review
@@ -362,7 +374,9 @@ exports.createProductReview = asyncErrorHandler(async (req, res, next) => {
       success: true,
     });
   } catch (error) {
-    return next(new ErrorHandler("Failed to create or update product review", 500));
+    return next(
+      new ErrorHandler("Failed to create or update product review", 500)
+    );
   }
 });
 
@@ -393,7 +407,6 @@ exports.getProductReviews = asyncErrorHandler(async (req, res, next) => {
   }
 });
 
-
 /**
  * @route   DELETE /api/products/:id/reviews
  * @desc    Delete a review
@@ -407,7 +420,7 @@ exports.deleteReview = asyncErrorHandler(async (req, res, next) => {
 
     // Check if the product exists
     if (!product) {
-      return next(new ErrorHandler("Product not found", 404)); 
+      return next(new ErrorHandler("Product not found", 404));
     }
 
     // Find the index of the review to delete
@@ -417,7 +430,7 @@ exports.deleteReview = asyncErrorHandler(async (req, res, next) => {
 
     // Check if the review exists
     if (reviewIndex === -1) {
-      return next(new ErrorHandler("Review not found", 404)); 
+      return next(new ErrorHandler("Review not found", 404));
     }
 
     // Remove the review from the reviews array
@@ -429,7 +442,8 @@ exports.deleteReview = asyncErrorHandler(async (req, res, next) => {
       totalRatings += rev.ratings;
     });
 
-    product.ratings = product.reviews.length > 0 ? totalRatings / product.reviews.length : 0;
+    product.ratings =
+      product.reviews.length > 0 ? totalRatings / product.reviews.length : 0;
     product.numOfReviews = product.reviews.length;
 
     // Save the updated product
@@ -444,7 +458,6 @@ exports.deleteReview = asyncErrorHandler(async (req, res, next) => {
   }
 });
 
-
 /**
  * @route   GET /api/products/category/:category
  * @desc    Get products by category
@@ -452,32 +465,33 @@ exports.deleteReview = asyncErrorHandler(async (req, res, next) => {
  */
 exports.getProductsByCategory = asyncErrorHandler(async (req, res, next) => {
   try {
-      const category = req.params.category;
+    const category = req.params.category;
 
-      // Validate category input
-      if (!category) {
-          return next(new ErrorHandler('Category parameter is missing', 400));
-      }
+    // Validate category input
+    if (!category) {
+      return next(new ErrorHandler("Category parameter is missing", 400));
+    }
 
-      // Find products by category
-      const products = await ProductModel.find({ category: category });
+    // Find products by category
+    const products = await ProductModel.find({ category: category });
 
-      // Check if products were found
-      if (!products || products.length === 0) {
-          return next(new ErrorHandler(`No products found for category: ${category}`, 404));
-      }
+    // Check if products were found
+    if (!products || products.length === 0) {
+      return next(
+        new ErrorHandler(`No products found for category: ${category}`, 404)
+      );
+    }
 
-      // Send success response with products
-      res.status(200).json({
-          success: true,
-          products: products,
-      });
+    // Send success response with products
+    res.status(200).json({
+      success: true,
+      products: products,
+    });
   } catch (error) {
-      // Handle any errors that occur
-      return next(new ErrorHandler('Failed to fetch products by category', 500));
+    // Handle any errors that occur
+    return next(new ErrorHandler("Failed to fetch products by category", 500));
   }
 });
-
 
 /**
  * @route   GET /api/products/brand/:brand
@@ -486,32 +500,33 @@ exports.getProductsByCategory = asyncErrorHandler(async (req, res, next) => {
  */
 exports.getProductsByBrand = asyncErrorHandler(async (req, res, next) => {
   try {
-      const brandName = req.params.brand;
+    const brandName = req.params.brand;
 
-      // Validate brand name input
-      if (!brandName) {
-          return next(new ErrorHandler('Brand parameter is missing', 400));
-      }
+    // Validate brand name input
+    if (!brandName) {
+      return next(new ErrorHandler("Brand parameter is missing", 400));
+    }
 
-      // Find products by brand name
-      const products = await ProductModel.find({ "brand.name": brandName });
+    // Find products by brand name
+    const products = await ProductModel.find({ "brand.name": brandName });
 
-      // Check if products were found
-      if (!products || products.length === 0) {
-          return next(new ErrorHandler(`No products found for brand: ${brandName}`, 404));
-      }
+    // Check if products were found
+    if (!products || products.length === 0) {
+      return next(
+        new ErrorHandler(`No products found for brand: ${brandName}`, 404)
+      );
+    }
 
-      // Send success response with products
-      res.status(200).json({
-          success: true,
-          products: products,
-      });
+    // Send success response with products
+    res.status(200).json({
+      success: true,
+      products: products,
+    });
   } catch (error) {
-      // Handle any errors that occur
-      return next(new ErrorHandler('Failed to fetch products by brand', 500));
+    // Handle any errors that occur
+    return next(new ErrorHandler("Failed to fetch products by brand", 500));
   }
 });
-
 
 /**
  * @route   GET /api/products/top-rated
@@ -519,12 +534,12 @@ exports.getProductsByBrand = asyncErrorHandler(async (req, res, next) => {
  * @access  Public
  */
 exports.getTopRatedProducts = asyncErrorHandler(async (req, res, next) => {
-    const products = await ProductModel.find().sort({ ratings: -1 }).limit(10);
+  const products = await ProductModel.find().sort({ ratings: -1 }).limit(10);
 
-    res.status(200).json({
-        success: true,
-        products: products,
-    });
+  res.status(200).json({
+    success: true,
+    products: products,
+  });
 });
 
 /**
@@ -533,17 +548,17 @@ exports.getTopRatedProducts = asyncErrorHandler(async (req, res, next) => {
  * @access  Public
  */
 exports.getRelatedProducts = asyncErrorHandler(async (req, res, next) => {
-    const productId = req.params.id;
-    const product = await ProductModel.findById(productId);
-    const relatedProducts = await ProductModel.find({
-        $or: [{ category: product.category }, { "brand.name": product.brand.name }],
-        _id: { $ne: productId }
-    }).limit(4);
+  const productId = req.params.id;
+  const product = await ProductModel.findById(productId);
+  const relatedProducts = await ProductModel.find({
+    $or: [{ category: product.category }, { "brand.name": product.brand.name }],
+    _id: { $ne: productId },
+  }).limit(4);
 
-    res.status(200).json({
-        success: true,
-        products: relatedProducts,
-    });
+  res.status(200).json({
+    success: true,
+    products: relatedProducts,
+  });
 });
 
 /**
@@ -552,15 +567,15 @@ exports.getRelatedProducts = asyncErrorHandler(async (req, res, next) => {
  * @access  Public
  */
 exports.getProductsByPriceRange = asyncErrorHandler(async (req, res, next) => {
-    const { minPrice, maxPrice } = req.query;
-    const products = await ProductModel.find({
-        price: { $gte: minPrice, $lte: maxPrice }
-    });
+  const { minPrice, maxPrice } = req.query;
+  const products = await ProductModel.find({
+    price: { $gte: minPrice, $lte: maxPrice },
+  });
 
-    res.status(200).json({
-        success: true,
-        products: products,
-    });
+  res.status(200).json({
+    success: true,
+    products: products,
+  });
 });
 
 /**
@@ -573,9 +588,9 @@ exports.searchProducts = async (req, res, next) => {
     const apiFeature = new SearchFeatures(ProductModel.find(), req.query)
       .fuzzySearch() // Apply search filter based on the query parameters
       .filter(); // Apply additional filters based on the query parameters
-  
+
     let products = await apiFeature.query; // Fetch the products based on the applied filters and search
-  
+
     res.status(200).json({
       success: true,
       products: products,
@@ -585,22 +600,24 @@ exports.searchProducts = async (req, res, next) => {
   }
 };
 
-
 /**
  * @route   GET /api/products/category/:category/count
  * @desc    Get product count by category
  * @access  Public
  */
-exports.getProductCountByCategory = asyncErrorHandler(async (req, res, next) => {
+exports.getProductCountByCategory = asyncErrorHandler(
+  async (req, res, next) => {
     const category = req.params.category;
-    const productCount = await ProductModel.countDocuments({ category: category });
+    const productCount = await ProductModel.countDocuments({
+      category: category,
+    });
 
     res.status(200).json({
-        success: true,
-        productCount: productCount,
+      success: true,
+      productCount: productCount,
     });
-});
-
+  }
+);
 
 // Brand Controller
 
@@ -630,9 +647,15 @@ exports.updateBrand = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { title, description, picture } = req.body;
-    const updatedBrand = await Brand.findByIdAndUpdate(id, { title, description, picture }, { new: true });
+    const updatedBrand = await Brand.findByIdAndUpdate(
+      id,
+      { title, description, picture },
+      { new: true }
+    );
     if (!updatedBrand) {
-      return res.status(404).json({ success: false, message: 'Brand not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Brand not found" });
     }
     res.status(200).json({ success: true, brand: updatedBrand });
   } catch (error) {
@@ -646,9 +669,17 @@ exports.deleteBrand = async (req, res, next) => {
     const { id } = req.params;
     const deletedBrand = await Brand.findByIdAndDelete(id);
     if (!deletedBrand) {
-      return res.status(404).json({ success: false, message: 'Brand not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Brand not found" });
     }
-    res.status(200).json({ success: true, message: 'Brand deleted successfully' });
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: "Brand deleted successfully",
+        brand: deletedBrand,
+      });
   } catch (error) {
     next(new ErrorHandler(error.message, 400));
   }
@@ -672,7 +703,9 @@ exports.getAllCategories = async (req, res, next) => {
   try {
     const categories = await Category.find();
     if (!categories || categories.length === 0) {
-      return res.status(404).json({ success: false, message: 'No categories found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "No categories found" });
     }
     res.status(200).json({ success: true, categories });
   } catch (error) {
@@ -685,9 +718,15 @@ exports.updateCategory = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { title } = req.body;
-    const updatedCategory = await Category.findByIdAndUpdate(id, { title }, { new: true });
+    const updatedCategory = await Category.findByIdAndUpdate(
+      id,
+      { title },
+      { new: true }
+    );
     if (!updatedCategory) {
-      return res.status(404).json({ success: false, message: 'Category not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Category not found" });
     }
     res.status(200).json({ success: true, category: updatedCategory });
   } catch (error) {
@@ -701,9 +740,15 @@ exports.deleteCategory = async (req, res, next) => {
     const { id } = req.params;
     const deletedCategory = await Category.findByIdAndDelete(id);
     if (!deletedCategory) {
-      return res.status(404).json({ success: false, message: 'Category not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Category not found" });
     }
-    res.status(200).json({ success: true, message: 'Category deleted successfully' });
+    res.status(200).json({
+      success: true,
+      message: "Category deleted successfully",
+      deletedCategory,
+    });
   } catch (error) {
     next(new ErrorHandler(error.message, 400));
   }
@@ -733,9 +778,15 @@ exports.updateCoupon = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { name, expiry, discount } = req.body;
-    const updatedCoupon = await Coupon.findByIdAndUpdate(id, { name, expiry, discount }, { new: true });
+    const updatedCoupon = await Coupon.findByIdAndUpdate(
+      id,
+      { name, expiry, discount },
+      { new: true }
+    );
     if (!updatedCoupon) {
-      return res.status(404).json({ success: false, message: 'Coupon not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Coupon not found" });
     }
     res.status(200).json({ success: true, coupon: updatedCoupon });
   } catch (error) {
@@ -749,9 +800,13 @@ exports.deleteCoupon = async (req, res, next) => {
     const { id } = req.params;
     const deletedCoupon = await Coupon.findByIdAndDelete(id);
     if (!deletedCoupon) {
-      return res.status(404).json({ success: false, message: 'Coupon not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Coupon not found" });
     }
-    res.status(200).json({ success: true, message: 'Coupon deleted successfully' });
+    res
+      .status(200)
+      .json({ success: true, message: "Coupon deleted successfully" });
   } catch (error) {
     next(new ErrorHandler(error.message, 400));
   }

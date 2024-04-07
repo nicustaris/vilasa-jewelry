@@ -10,8 +10,10 @@ const dynamicImageSchema = new mongoose.Schema({
     required: true,
   },
   url: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Url",
+    // type: mongoose.Schema.Types.ObjectId,
+    // ref: "Url",
+    type: String,
+    required: true,
   },
 });
 

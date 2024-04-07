@@ -1,13 +1,16 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import * as yup from "yup";
 import { Formik, Form, Field, FieldArray } from "formik";
 
 import { MdOutlineCloudUpload } from "react-icons/md";
 import { FaPlus } from "react-icons/fa";
+import { CiSquareRemove } from "react-icons/ci";
 
-import { useDispatch } from "react-redux";
-import { createProduct } from "./../../../store/product/productSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { createProduct } from "../../../store/products/productsSlice";
+import { getBrands } from "../../../store/brands/brandsSlice";
+import { getCategories } from "../../../store/categories/categoriesSlice";
 
 const productSchema = yup.object().shape({
   name: yup.string().required().min(3).max(25),
@@ -28,22 +31,17 @@ const productSchema = yup.object().shape({
   ),
 });
 
-const AddProduct = ({
-  name = "",
-  description = "",
-  category = "",
-  brand = "",
-  stock = 0,
-  price = "",
-  cuttedPrice = "",
-  product_warranty = 0,
-  product_discount = 0,
-  highlights = [],
-  specifications = [{ title: "", description: "" }],
-  updateProduct = false,
-}) => {
+const AddProduct = () => {
   const dispatch = useDispatch();
   const [images, setImages] = useState([]);
+
+  useEffect(() => {
+    dispatch(getBrands());
+    dispatch(getCategories());
+  }, []);
+
+  const { brands } = useSelector((state) => state.brands);
+  const { categories } = useSelector((state) => state.categories);
 
   const handleImage = (event) => {
     const files = event.target.files;
@@ -77,33 +75,34 @@ const AddProduct = ({
     }
   };
 
+  const filterImages = (clickedImage) => {
+    console.log("hey");
+    const filteredImages = images.filter((image) => image !== clickedImage);
+    setImages(filteredImages);
+  };
+
   return (
     <Formik
       initialValues={{
-        name: name,
-        description: description,
-        category: category,
-        // brand: brand,
-        stock: stock,
-        price: price,
-        cuttedPrice: cuttedPrice,
-        warranty: product_warranty,
-        discount: product_discount,
-        highlights: highlights,
-        specifications: specifications,
+        name: "",
+        description: "",
+        category: "",
+        brand: "",
+        stock: 0,
+        price: 0,
+        cuttedPrice: 0,
+        warranty: 0,
+        discount: 0,
+        highlights: "",
+        specifications: [{ title: "", description: "" }],
         images: images,
       }}
       validationSchema={productSchema}
       onSubmit={(productData, { resetForm }) => {
         productData.images = images;
         try {
-          if (!updateProduct) {
-            dispatch(createProduct(productData));
-          } else {
-            console.log("PRODUCT DATA NEW", productData);
-          }
-
-          // resetForm();
+          dispatch(createProduct(productData));
+          resetForm();
         } catch (error) {
           console.error("Error:", error);
         }
@@ -146,8 +145,11 @@ const AddProduct = ({
                     <h3 className="font-medium">Category</h3>
                     <Field as="select" name="category" className="custum-input">
                       <option value="">Select category</option>
-                      <option value="category1">Category 1</option>
-                      <option value="category2">Category 2</option>
+                      {categories.map((category) => (
+                        <option key={category._id} value={category._id}>
+                          {category.title}
+                        </option>
+                      ))}
                     </Field>
                     {formikProps.touched.product_category &&
                     formikProps.errors.product_category ? (
@@ -160,8 +162,11 @@ const AddProduct = ({
                     <h3 className="font-medium">Brand</h3>
                     <Field as="select" name="brand" className="custum-input">
                       <option value="">Select brand</option>
-                      <option value="brand1">Brand 1</option>
-                      <option value="brand2">Brand 2</option>
+                      {brands?.map((brand) => (
+                        <option key={brand._id} value={brand._id}>
+                          {brand.title}
+                        </option>
+                      ))}
                     </Field>
                     {formikProps.touched.product_brand &&
                     formikProps.errors.product_brand ? (
@@ -339,28 +344,35 @@ const AddProduct = ({
                   </div>
                   <FieldArray
                     render={({ push, remove, form }) => (
-                      <div>
-                        <input
-                          id="dropzone-file"
-                          type="file"
-                          name="images"
-                          className="hidden"
-                          multiple
-                          onChange={(event) => handleImage(event)}
-                        />
-                        {images && images.length > 0 ? (
-                          <div className="flex space-x-2">
-                            {images.map((image, index) => (
-                              <div key={index} className="w-[40px] h-[40px]">
-                                <img src={image} />
-                              </div>
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
+                      <input
+                        id="dropzone-file"
+                        type="file"
+                        name="images"
+                        className="hidden"
+                        multiple
+                        onChange={(event) => handleImage(event)}
+                      />
                     )}
                   />
                 </label>
+                <div className="mt-4 w-full flex-1">
+                  {images && images.length > 0 ? (
+                    <div className="flex space-x-2">
+                      {images.map((image, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={image}
+                            onClick={(e) => filterImages(image)}
+                            className="w-[40px] h-[40px] rounded-sm"
+                          />
+                          <div className="absolute right-0 top-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                            <CiSquareRemove size={20} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
               </div>
             </div>
           </Form>

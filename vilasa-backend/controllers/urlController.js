@@ -70,11 +70,11 @@ exports.deleteUrl = asyncErrorHandler(async (req, res, next) => {
     return next(new ErrorHandler("URL not found", 404));
   }
 
-  await url.remove();
+  const urlData = await url.remove();
 
   res.status(200).json({
     success: true,
     message: "URL deleted",
+    data: urlData,
   });
 });
-

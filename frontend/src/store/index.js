@@ -1,16 +1,20 @@
 import { configureStore } from "@reduxjs/toolkit";
-import productSlice from "./product/productSlice";
+import productsSlice from "./products/productsSlice";
 import enquiriesSlice from "./enquiries/enquiriesSlice";
 import enquirySlice from "./enquiry/enquirySlice";
 import webElementsSlice from "./webelements/webElementsSlice";
-import brandsSlice from "./categories/categoriesSlice";
+import categoriesSlice from "./categories/categoriesSlice";
+import brandsSlice from "./brands/brandsSlice";
+import productSlice from "./product/productSlice";
 
 export const store = configureStore({
   reducer: {
-    products: productSlice,
+    products: productsSlice,
+    product: productSlice,
     enquiries: enquiriesSlice,
     enquiry: enquirySlice,
     webelements: webElementsSlice,
-    categories: brandsSlice,
+    categories: categoriesSlice,
+    brands: brandsSlice,
   },
 });

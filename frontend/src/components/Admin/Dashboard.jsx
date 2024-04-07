@@ -8,6 +8,7 @@ import EnquiryDetails from "./Enquiries/EnquiryDetails";
 import WebElements from "./WebElements/WebElements";
 import ManageProducts from "./Products/ManageProducts";
 import CategoryAndBrand from "./CategoryAndBrand/CategoryAndBrand";
+import UpdateProduct from "./Products/UpdateProduct";
 
 const Dashboard = () => {
   return (
@@ -18,10 +19,14 @@ const Dashboard = () => {
       </div>
       <div className="w-[80%]">
         <Routes>
-          <Route path="/products/add-product" element={<AddProduct />} />
           <Route
             path="/products/manage-products"
             element={<ManageProducts />}
+          />
+          <Route path="/products/add-product" element={<AddProduct />} />
+          <Route
+            path="/products/update-product/:id"
+            element={<UpdateProduct />}
           />
           <Route
             path="/products/category-and-brand"

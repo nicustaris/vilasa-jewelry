@@ -12,13 +12,13 @@ export const createCategory = createAsyncThunk(
   "CREATE_CATEGORY",
   async (data, ThunkAPI) => {
     try {
-      const createCategory = await apiClient.post(
+      const createdCategory = await apiClient.post(
         "/vilasa-v1/vproduct/categories",
         {
           title: data,
         }
       );
-      return createCategory.data;
+      return createdCategory.data;
     } catch (error) {
       return ThunkAPI.rejectWithValue(error.message);
     }
@@ -43,10 +43,25 @@ export const deleteCategory = createAsyncThunk(
   "DELETE_CATEGORY",
   async (categoryId, ThunkAPI) => {
     try {
-      const deleteCategory = await apiClient.delete(
+      const deletedCategory = await apiClient.delete(
         `/vilasa-v1/vproduct/categories/${categoryId}`
       );
-      return deleteCategory.data;
+      return deletedCategory.data;
+    } catch (error) {
+      return ThunkAPI.rejectWithValue(error.message);
+    }
+  }
+);
+
+export const updateCategory = createAsyncThunk(
+  "UPDATE_CATEGORY",
+  async ({ newCategory, categoryId }, ThunkAPI) => {
+    try {
+      const updatedCategory = await apiClient.put(
+        `/vilasa-v1/vproduct/categories/${categoryId}`,
+        { title: newCategory }
+      );
+      return updatedCategory.data;
     } catch (error) {
       ThunkAPI.rejectWithValue(error.message);
     }
@@ -104,6 +119,26 @@ const categoriesSlice = createSlice({
         );
       })
       .addCase(deleteCategory.rejected, (state) => {
+        state.isLoading = false;
+        state.isError = true;
+      })
+
+      .addCase(updateCategory.pending, (state) => {
+        state.isLoading = true;
+        state.isError = null;
+      })
+      .addCase(updateCategory.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isError = null;
+        const updatedCategory = action.payload.category;
+        const index = state.categories.findIndex(
+          (category) => category._id === updatedCategory._id
+        );
+        if (index !== -1) {
+          state.categories[index] = updatedCategory;
+        }
+      })
+      .addCase(updateCategory.rejected, (state) => {
         state.isLoading = false;
         state.isError = true;
       });
